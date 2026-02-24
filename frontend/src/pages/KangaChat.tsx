@@ -22,7 +22,8 @@ const KangaChat = () => {
         setLoading(true);
 
         try {
-            const res = await axios.post('http://localhost:5000/api/chat', { query: userMsg });
+            const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const res = await axios.post(`${API_BASE_URL}/chat`, { query: userMsg });
             setMessages(prev => [...prev, { role: 'ai', text: res.data.response }]);
         } catch (err) {
             setMessages(prev => [...prev, { role: 'ai', text: "Sorry, I lost connection to the mainframe." }]);

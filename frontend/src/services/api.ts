@@ -2,7 +2,7 @@
   The Pouch — API Service
   
   Centralized data fetching logic using Axios.
-  Configured to connect to Flask backend at localhost:5000.
+    Configured to connect to Flask backend.
 */
 
 import axios from 'axios';

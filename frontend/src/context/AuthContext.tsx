@@ -42,7 +42,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setError(null);
         setLoading(true);
         try {
-            const resp = await axios.post('http://localhost:5000/api/auth/login', { pin });
+            const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const resp = await axios.post(`${API_BASE_URL}/auth/login`, { pin });
             const userData: AuthUser = resp.data;
             setUser(userData);
             sessionStorage.setItem(SESSION_KEY, JSON.stringify(userData));
