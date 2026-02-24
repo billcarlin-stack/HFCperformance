@@ -20,25 +20,15 @@ wellbeing_bp = Blueprint("wellbeing", __name__)
 
 
 @wellbeing_bp.route("/api/wellbeing", methods=["POST"])
-@require_role("admin", "coach", "medical")
+@require_role("admin", "coach", "medical", "player")
 def post_wellbeing():
     """
     Submits a wellbeing survey for a player.
-
-    Request body (JSON):
-        {
-            "player_id": 12,
-            "sleep_score": 8,
-            "soreness_score": 7,
-            "stress_score": 9,
-            "notes": "Feeling good after recovery session"  (optional)
-        }
-
-    All scores are on a 1-10 scale (10 = best).
-
-    Response: The submitted survey record with a calculated readiness score.
     """
     data = request.get_json()
+    from flask import g
+    if g.user_role == 'player' and data.get("player_id") != g.player_id:
+        return jsonify({"error": "Forbidden", "message": "Players can only submit surveys for themselves"}), 403
 
     if not data:
         return jsonify({"error": "Request body must be JSON"}), 400
@@ -68,19 +58,14 @@ def post_wellbeing():
 
 
 @wellbeing_bp.route("/api/wellbeing/<int:jumper_no>", methods=["GET"])
-@require_role("admin", "coach", "medical")
+@require_role("admin", "coach", "medical", "player")
 def get_wellbeing(jumper_no):
     """
     Returns the wellbeing survey history for a player.
-
-    Path params:
-        jumper_no: Player's jumper number (integer).
-
-    Query params:
-        limit: Max records to return (default: 30, max: 100).
-
-    Response: JSON array of survey records, most recent first.
     """
+    from flask import g
+    if g.user_role == 'player' and g.player_id != jumper_no:
+        return jsonify({"error": "Forbidden", "message": "Players can only view their own history"}), 403
     try:
         limit = min(int(request.args.get("limit", 30)), 100)
         surveys = get_surveys_for_player(jumper_no, limit=limit)

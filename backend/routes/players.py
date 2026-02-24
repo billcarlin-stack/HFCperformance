@@ -103,16 +103,15 @@ def compare_players():
 
 
 @players_bp.route("/api/players/<int:jumper_no>", methods=["GET"])
-@require_role("admin", "coach", "medical", "analyst")
+@require_role("admin", "coach", "medical", "analyst", "player")
 def get_player(jumper_no):
     """
     Returns detailed player info including IDP ratings.
-
-    Path params:
-        jumper_no: Player's jumper number (integer).
-
-    Response: JSON object with player data and nested `idp` object.
     """
+    from flask import g
+    if g.user_role == 'player' and g.player_id != jumper_no:
+        return jsonify({"error": "Forbidden", "message": "Players can only view their own profile"}), 403
+
     try:
         player = get_player_by_id(jumper_no)
         if not player:

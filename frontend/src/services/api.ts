@@ -180,10 +180,7 @@ export const ApiService = {
 
     // Insights
     getTeamInsights: async () => {
-        // Switch role to 'analyst' for this call just in case (though coach works too)
-        const response = await api.get<TeamInsights>('/insights/team', {
-            headers: { 'X-User-Role': 'analyst' }
-        });
+        const response = await api.get<TeamInsights>('/insights/team');
         return response.data;
     },
 
@@ -196,9 +193,7 @@ export const ApiService = {
             stress_score: data.stress,
             notes: data.notes
         };
-        const response = await api.post('/wellbeing', payload, {
-            headers: { 'X-User-Role': 'medical' }
-        });
+        const response = await api.post('/wellbeing', payload);
         return response.data;
     },
 

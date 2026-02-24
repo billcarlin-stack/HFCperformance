@@ -18,22 +18,15 @@ idp_bp = Blueprint("idp", __name__)
 
 
 @idp_bp.route("/api/idp/<int:jumper_no>", methods=["GET"])
-@require_role("admin", "coach", "analyst")
+@require_role("admin", "coach", "analyst", "player")
 def get_idp(jumper_no):
     """
     Returns the Individual Development Plan (IDP) ratings for a player.
-
-    IDP Categories (1-10 scale):
-        - Grit
-        - TacticalIQ
-        - Execution
-        - Resilience
-        - Leadership
-        - composite_score (weighted average)
-
-    Path params:
-        jumper_no: Player's jumper number (integer).
     """
+    from flask import g
+    if g.user_role == 'player' and g.player_id != jumper_no:
+        return jsonify({"error": "Forbidden", "message": "Players can only view their own IDP"}), 403
+
     try:
         idp = get_idp_for_player(jumper_no)
         return jsonify(idp), 200
