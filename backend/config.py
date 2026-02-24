@@ -47,7 +47,10 @@ class ProductionConfig(Config):
     """Production configuration for Cloud Run."""
 
     DEBUG = False
-    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "https://shinbonerhub.nmfc.com.au")
+    CORS_ORIGINS = os.environ.get(
+        "CORS_ORIGINS", 
+        ["https://shinbonerhub.nmfc.com.au", "https://the-pouch.vercel.app"]
+    )
 
 
 class TestingConfig(Config):
