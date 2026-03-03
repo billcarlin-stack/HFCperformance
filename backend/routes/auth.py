@@ -8,7 +8,7 @@ PIN-based authentication:
 
 import logging
 from flask import Blueprint, jsonify, request
-from models.players import get_player_by_id, list_players
+from models.players import get_player_by_id, get_all_players
 
 logger = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)
@@ -52,7 +52,7 @@ def login():
     if not player:
         # Check if database is empty to provide helpful hint
         try:
-            all_players = list_players()
+            all_players = get_all_players()
             if not all_players:
                 return jsonify({"error": "Database is currently empty. Please trigger /api/admin/seed to initialize data."}), 401
         except:
