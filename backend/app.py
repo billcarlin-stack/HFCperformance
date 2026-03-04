@@ -82,33 +82,15 @@ def create_app(config=None):
     # ── Temporary Admin/Seed Route ────────────────────────────────
     @app.route('/api/admin/seed', methods=['GET'])
     def admin_seed():
-        """Synchronous seeding route to ensure database tables are created and populated.
-        Returns 500 with stack trace if any part of the process fails.
+        """Synchronous seeding route using consolidated database_utils.
         """
         try:
-            import sys
-            import os
+            from database_utils import initialize_and_seed
+            initialize_and_seed()
             
-            # Explicitly add the backend root to the Python path
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            if current_dir not in sys.path:
-                sys.path.insert(0, current_dir)
-                
-            from db.alloydb_client import init_db
-            from seeds.seed_alloydb_players import seed_alloydb
-            from seeds.seed_alloydb_fitness import seed_alloydb_fitness
-            
-            logger.info("Initializing database schema...")
-            init_db()
-            
-            logger.info("Starting synchronous seeding...")
-            seed_alloydb()
-            seed_alloydb_fitness()
-            
-            logger.info("Seeding completed successfully!")
             return jsonify({
                 "status": "success", 
-                "message": "Database initialized and seeded successfully"
+                "message": "Database initialized and seeded successfully (Simplified Version)"
             }), 200
             
         except Exception as e:
