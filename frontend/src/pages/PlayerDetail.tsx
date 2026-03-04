@@ -132,7 +132,7 @@ export const PlayerDetail = () => {
     const { id } = useParams();
     const [player, setPlayer] = useState<Player | null>(null);
     const [matchRatings, setMatchRatings] = useState<any[]>([]);
-    const [coachRatings, setCoachRatings] = useState<any[]>([]);
+    const [aggregatedRatings, setAggregatedRatings] = useState<any[]>([]);
     const [playerInjuries, setPlayerInjuries] = useState<Injury[]>([]);
     const [stats2025, setStats2025] = useState<PlayerStats | null>(null);
     const [latestWellbeing, setLatestWellbeing] = useState<any>(null);
@@ -157,7 +157,9 @@ export const PlayerDetail = () => {
                     setPlayer(p.value);
                     setMatchRatings(getMatchRatings(p.value.jumper_no));
                 }
-                if (r.status === 'fulfilled') setCoachRatings(r.value.ratings);
+                if (r.status === 'fulfilled') {
+                    setAggregatedRatings(r.value.aggregated);
+                }
                 if (allInj.status === 'fulfilled') setPlayerInjuries(allInj.value.filter((i: Injury) => i.player_id === Number(id)));
                 if (s.status === 'fulfilled' && s.value.length > 0) setStats2025(s.value[0]);
                 if (w.status === 'fulfilled' && w.value.length > 0) setLatestWellbeing(w.value[0]);
@@ -182,12 +184,12 @@ export const PlayerDetail = () => {
         };
     });
 
-    // Granular skills for "spiky" radar matching the professional look
-    const idpData = coachRatings.map(r => ({
-        subject: r.skill,
-        Coach: r.coach_rating,
-        Self: r.self_rating,
-        Squad: r.squad_avg,
+    // Aggregated data for cleaner radar matching the professional look
+    const idpData = aggregatedRatings.map(r => ({
+        subject: r.category,
+        Coach: r.coach,
+        Self: r.self,
+        Squad: r.squad,
         fullMark: 10
     }));
 

@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { ApiService, formatPlayerImage } from '../services/api';
-import type { Player, CoachRating } from '../services/api';
+import type { Player, CoachRating, AggregatedRating } from '../services/api';
 import { User } from 'lucide-react';
 import {
     Radar,
@@ -24,6 +24,7 @@ export const RatingComparison = () => {
     const [selectedPlayerId, setSelectedPlayerId] = useState<number>(0);
     const [selectedCategory, setSelectedCategory] = useState<string>("Technical");
     const [ratings, setRatings] = useState<CoachRating[]>([]);
+    const [aggregatedRatings, setAggregatedRatings] = useState<AggregatedRating[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -32,9 +33,13 @@ export const RatingComparison = () => {
 
     useEffect(() => {
         if (selectedPlayerId) {
-            ApiService.getRatings(selectedPlayerId).then(res => setRatings(res.ratings));
+            ApiService.getRatings(selectedPlayerId).then(res => {
+                setRatings(res.ratings);
+                setAggregatedRatings(res.aggregated);
+            });
         } else {
             setRatings([]);
+            setAggregatedRatings([]);
         }
     }, [selectedPlayerId]);
 
@@ -47,11 +52,12 @@ export const RatingComparison = () => {
 
     const filteredRatings = ratings.filter(r => r.category === selectedCategory);
 
-    const chartData = filteredRatings.map(r => ({
-        skill: r.skill,
-        Coach: r.coach_rating,
-        Self: r.self_rating,
-        Squad: r.squad_avg,
+    // Use aggregated ratings for the Radar Chart
+    const chartData = aggregatedRatings.map(r => ({
+        skill: r.category,
+        Coach: r.coach,
+        Self: r.self,
+        Squad: r.squad,
         fullMark: 10
     }));
 

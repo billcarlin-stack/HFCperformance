@@ -116,8 +116,16 @@ export interface CoachRating {
     gap: number;
 }
 
+export interface AggregatedRating {
+    category: string;
+    coach: number;
+    self: number;
+    squad: number;
+}
+
 export interface RatingResponse {
     ratings: CoachRating[];
+    aggregated: AggregatedRating[];
 }
 
 export interface FitnessSession {

@@ -66,12 +66,38 @@ def get_player_ratings(player_id: int) -> dict:
                 
         comparison_data = []
         
+        # ── Aggregation Logic ──────────────────────────────────────────────────
+        aggregated = {
+            "Kicking": {"coach": [], "self": [], "squad": []},
+            "Marking": {"coach": [], "self": [], "squad": []},
+            "Contest": {"coach": [], "self": [], "squad": []},
+            "Tactical": {"coach": [], "self": [], "squad": []},
+            "Physical": {"coach": [], "self": [], "squad": []},
+            "Mental": {"coach": [], "self": [], "squad": []}
+        }
+
+        mapping = {
+            "Kicking": ["Kicking", "Goal Kicking", "Foot Effectiveness"],
+            "Marking": ["Marking"],
+            "Contest": ["Handball", "Clean Hands", "Ground Ball", "Tackle", "Tackling", "Spoil", "Smother", "Ruck Setup"],
+            "Tactical": ["Positioning", "Decision Making", "Reading the Play", "Structure", "Game Sense", "Transition"],
+            "Physical": ["Acceleration", "Speed", "Agility", "Endurance", "Strength", "Vertical Jump", "Explosiveness", "Recovery"],
+            "Mental": ["Resilience", "Leadership", "Professionalism", "Communication", "Work Rate", "Focus", "Coachability", "Aggression", "Composure", "Drive"]
+        }
+
+        def get_group(skill_name):
+            for group, keywords in mapping.items():
+                if any(k.lower() in skill_name.lower() for k in keywords):
+                    return group
+            return None
+
+        # Process Granular Data
         for key, data in coach_ratings.items():
             coach_val = data["rating"]
             skill = data["skill"]
             category = data["category"]
             
-            # Mock values for Self and Squad as per original logic, keeping them close to coach val
+            # Mock values for Self and Squad
             self_val = max(1, min(10, coach_val + random.randint(-2, 2)))
             squad_val = max(1, min(10, coach_val + random.randint(-1, 2)))
             
@@ -83,7 +109,29 @@ def get_player_ratings(player_id: int) -> dict:
                 "squad_avg": squad_val,
                 "gap": coach_val - self_val
             })
-            
-        return {"ratings": comparison_data}
+
+            # Add to aggregation
+            group = get_group(skill)
+            if group:
+                aggregated[group]["coach"].append(coach_val)
+                aggregated[group]["self"].append(self_val)
+                aggregated[group]["squad"].append(squad_val)
+
+        # Finalize Aggregated Data
+        aggregated_data = []
+        import statistics
+        for group, vals in aggregated.items():
+            if vals["coach"]:
+                aggregated_data.append({
+                    "category": group,
+                    "coach": round(statistics.mean(vals["coach"]), 1),
+                    "self": round(statistics.mean(vals["self"]), 1),
+                    "squad": round(statistics.mean(vals["squad"]), 1)
+                })
+
+        return {
+            "ratings": comparison_data,
+            "aggregated": aggregated_data
+        }
     finally:
         session.close()
