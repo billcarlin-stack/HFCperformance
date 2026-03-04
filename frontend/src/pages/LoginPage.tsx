@@ -14,7 +14,7 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#0C2340] via-[#0a1e38] to-[#061525] flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-hfc-brown via-[#2D1302] to-[#1A0B01] flex items-center justify-center p-6 relative overflow-hidden">
             {/* Background elements */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-hfc-brown/10 blur-[120px]" />

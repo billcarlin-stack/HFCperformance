@@ -146,7 +146,7 @@ export const Dashboard = () => {
             </div>
 
             {/* Squad Fitness Performance Row */}
-            <div className="bg-[#0C2340] rounded-[2.5rem] p-8 text-white border border-white/10 shadow-2xl overflow-hidden relative">
+            <div className="bg-hfc-brown rounded-[2.5rem] p-8 text-white border border-white/10 shadow-2xl overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gold-400/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
                 <div className="relative z-10">
                     <h3 className="text-xl font-black uppercase tracking-tight mb-6 flex items-center gap-3">

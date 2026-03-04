@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-hfc-brown: #0C2340;
-  --color-hfc-brown: #0057B8;
+  /* Hawthorn Official Brown */
+  --color-hfc-brown: #4D2004;
   --color-hfc-white: #FFFFFF;
   --color-hfc-light: #F4F6F8;
   --color-hfc-slate: #334155;

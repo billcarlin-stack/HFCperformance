@@ -47,7 +47,7 @@ export const Sidebar = () => {
     };
 
     return (
-        <div className="w-64 h-screen bg-[#0C2340] border-r border-white/5 flex flex-col text-white fixed left-0 top-0 shadow-2xl z-50">
+        <div className="w-64 h-screen bg-hfc-brown border-r border-white/5 flex flex-col text-white fixed left-0 top-0 shadow-2xl z-50">
             {/* Brand Header */}
             <div className="p-8 flex items-center gap-4">
                 <div className="bg-white rounded-2xl p-1.5 h-12 w-12 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-500">
