@@ -34,6 +34,7 @@ def initialize_and_seed():
     """Synchronously initializes schema and populates data."""
     engine = get_engine()
     logger.info("Dropping and recreating all tables...")
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     
     Session = sessionmaker(bind=engine)
