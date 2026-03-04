@@ -49,38 +49,35 @@ def create_app(config=None):
         }), 200
 
     # ── Register Blueprints ───────────────────────────────────────
-    try:
-        from routes.players import players_bp
-        from routes.idp import idp_bp
-        from routes.wellbeing import wellbeing_bp
-        from routes.availability import availability_bp
-        from routes.insights import insights_bp
-        from routes.injuries import injuries_bp
-        from routes.ratings import ratings_bp
-        from routes.ai import ai_bp
-        from routes.stats import stats_bp
-        from routes.team import team_bp
-        from routes.auth import auth_bp
-        from routes.woop import woop_bp
-        from routes.calendar import calendar_bp
-        from routes.fitness import fitness_bp
+    from routes.players import players_bp
+    from routes.idp import idp_bp
+    from routes.wellbeing import wellbeing_bp
+    from routes.availability import availability_bp
+    from routes.insights import insights_bp
+    from routes.injuries import injuries_bp
+    from routes.ratings import ratings_bp
+    from routes.ai import ai_bp
+    from routes.stats import stats_bp
+    from routes.team import team_bp
+    from routes.auth import auth_bp
+    from routes.woop import woop_bp
+    from routes.calendar import calendar_bp
+    from routes.fitness import fitness_bp
 
-        app.register_blueprint(players_bp)
-        app.register_blueprint(idp_bp)
-        app.register_blueprint(wellbeing_bp)
-        app.register_blueprint(availability_bp)
-        app.register_blueprint(insights_bp)
-        app.register_blueprint(injuries_bp, url_prefix='/api')
-        app.register_blueprint(ratings_bp, url_prefix='/api')
-        app.register_blueprint(ai_bp, url_prefix='/api/ai')
-        app.register_blueprint(stats_bp, url_prefix='/api/stats')
-        app.register_blueprint(team_bp, url_prefix='/api/team')
-        app.register_blueprint(auth_bp, url_prefix='/api/auth')
-        app.register_blueprint(woop_bp, url_prefix='/api')
-        app.register_blueprint(calendar_bp, url_prefix='/api')
-        app.register_blueprint(fitness_bp, url_prefix='/api/v1/fitness')
-    except Exception as e:
-        logger.error("Failed to register blueprints: %s", str(e))
+    app.register_blueprint(players_bp)
+    app.register_blueprint(idp_bp)
+    app.register_blueprint(wellbeing_bp)
+    app.register_blueprint(availability_bp)
+    app.register_blueprint(insights_bp)
+    app.register_blueprint(injuries_bp, url_prefix='/api')
+    app.register_blueprint(ratings_bp, url_prefix='/api')
+    app.register_blueprint(ai_bp, url_prefix='/api/ai')
+    app.register_blueprint(stats_bp, url_prefix='/api/stats')
+    app.register_blueprint(team_bp, url_prefix='/api/team')
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(woop_bp, url_prefix='/api')
+    app.register_blueprint(calendar_bp, url_prefix='/api')
+    app.register_blueprint(fitness_bp, url_prefix='/api/v1/fitness')
 
     # ── Temporary Admin/Seed Route ────────────────────────────────
     @app.route('/api/admin/seed', methods=['GET'])
@@ -89,6 +86,14 @@ def create_app(config=None):
         Returns 500 with stack trace if any part of the process fails.
         """
         try:
+            import sys
+            import os
+            
+            # Explicitly add the backend root to the Python path
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            if current_dir not in sys.path:
+                sys.path.insert(0, current_dir)
+                
             from db.alloydb_client import init_db
             from seeds.seed_alloydb_players import seed_alloydb
             from seeds.seed_alloydb_fitness import seed_alloydb_fitness
