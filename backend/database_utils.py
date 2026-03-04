@@ -12,9 +12,8 @@ from sqlalchemy.orm import sessionmaker
 from db.alloydb_client import Base, get_engine
 from models.players import Player
 from models.fitness import FitnessSession, FitnessPBs
-from models.ratings import Rating
+from models.ratings import CoachRating
 from models.wellbeing import WellbeingSurvey
-from models.availability import Availability
 from models.injuries import InjuryLog
 from models.team import TeamSelection
 from models.woop import WoopGoal
