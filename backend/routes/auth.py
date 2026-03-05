@@ -60,7 +60,12 @@ def verify_token():
         return jsonify({"error": "Invalid token. Please sign in again."}), 401
     except Exception as e:
         logger.error("Token verification failed: %s", str(e))
-        return jsonify({"error": "Authentication failed. Please try again."}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error": "Authentication failed. Please try again.",
+            "details": str(e)
+        }), 500
 
 
 @auth_bp.route("/login", methods=["POST"])

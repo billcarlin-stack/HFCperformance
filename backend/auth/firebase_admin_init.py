@@ -38,8 +38,10 @@ def get_firebase_app():
             logger.info("Firebase Admin initialized with service account JSON.")
         else:
             # Use Application Default Credentials (ADC) — works on Cloud Run automatically
-            _firebase_app = firebase_admin.initialize_app()
-            logger.info("Firebase Admin initialized with Application Default Credentials.")
+            # We MUST specify projectId so verify_id_token knows who the audience is.
+            project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "bill-sandpit")
+            _firebase_app = firebase_admin.initialize_app(options={"projectId": project_id})
+            logger.info(f"Firebase Admin initialized with ADC for project {project_id}.")
     except ValueError:
         # App already initialized (e.g. in tests), get the default
         _firebase_app = firebase_admin.get_app()
