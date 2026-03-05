@@ -75,12 +75,19 @@ def require_role(*allowed_roles):
                     "message": "A valid Firebase ID token is required. Please sign in with Google."
                 }), 401
 
-            user_role = user.get("role", "").lower()
+            # Instead of forcing the DB role, we read the role the user selected
+            # via the PIN login on the frontend (sent in the headers).
+            user_role = request.headers.get("X-User-Role", "").lower()
+            player_id_str = request.headers.get("X-Player-Id")
+            
+            player_id = None
+            if player_id_str and player_id_str.isdigit():
+                player_id = int(player_id_str)
 
             if user_role not in VALID_ROLES:
                 return jsonify({
                     "error": "Invalid role",
-                    "message": f"Role '{user_role}' is not recognized."
+                    "message": f"Role '{user_role}' is not recognized or not provided. Please complete the PIN login."
                 }), 403
 
             if user_role not in allowed_roles:
@@ -92,7 +99,7 @@ def require_role(*allowed_roles):
             # Store in Flask's request-scoped globals for use in route handlers
             g.user_role = user_role
             g.user_email = user.get("email")
-            g.player_id = user.get("player_id")
+            g.player_id = player_id
 
             return f(*args, **kwargs)
 

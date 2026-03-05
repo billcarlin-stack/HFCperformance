@@ -19,18 +19,35 @@ export const api = axios.create({
     }
 });
 
-// Add request interceptor to inject Firebase Bearer token on every request
+// Add request interceptor to inject auth headers from both Google and PIN session
 api.interceptors.request.use(async (config) => {
+    // 1. Google Auth Layer (Bearer Token)
     const currentUser = auth.currentUser;
     if (currentUser) {
         try {
-            // getIdToken(true) forces refresh if token is about to expire
             const idToken = await currentUser.getIdToken();
             config.headers['Authorization'] = `Bearer ${idToken}`;
         } catch (e) {
             console.error('Failed to get Firebase ID token', e);
         }
     }
+
+    // 2. PIN Role Layer (X- headers)
+    const storedPinSession = sessionStorage.getItem('hawk_hub_user');
+    if (storedPinSession) {
+        try {
+            const user = JSON.parse(storedPinSession);
+            if (user.role) {
+                config.headers['X-User-Role'] = user.role;
+            }
+            if (user.jumper_no || user.player_id) {
+                config.headers['X-Player-Id'] = (user.jumper_no || user.player_id).toString();
+            }
+        } catch (e) {
+            console.error('Failed to parse PIN user for headers', e);
+        }
+    }
+
     return config;
 });
 

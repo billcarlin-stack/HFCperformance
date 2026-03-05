@@ -18,6 +18,7 @@ interface AuthContextType {
     loading: boolean;
     error: string | null;
     loginWithGoogle: () => Promise<boolean>;
+    loginWithPin: (pin: string) => Promise<boolean>;
     logout: () => Promise<void>;
 }
 
@@ -34,20 +35,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
             setFirebaseUser(fbUser);
             if (fbUser) {
-                // Re-verify with backend to get role on page reload
+                // Re-verify with backend to ensure Google account is still authorized
                 try {
                     const idToken = await fbUser.getIdToken();
-                    const resp = await api.post('/auth/verify', { idToken });
-                    setUser(resp.data);
+                    await api.post('/auth/verify', { idToken });
+
+                    // If backend accepts the Google account, see if we already have a PIN session
+                    const stored = sessionStorage.getItem('hawk_hub_user');
+                    if (stored) {
+                        setUser(JSON.parse(stored));
+                    }
                 } catch (e: any) {
                     const msg = e.response?.data?.message || e.response?.data?.error || 'Access denied.';
                     setError(msg);
                     setUser(null);
+                    sessionStorage.removeItem('hawk_hub_user');
                     // Sign out of Firebase if backend rejects this account
                     await signOut(auth);
                 }
             } else {
                 setUser(null);
+                sessionStorage.removeItem('hawk_hub_user');
             }
             setLoading(false);
         });
@@ -62,9 +70,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const result = await signInWithPopup(auth, googleProvider);
             const idToken = await result.user.getIdToken();
 
-            // Verify token with our backend and get role
-            const resp = await api.post('/auth/verify', { idToken });
-            setUser(resp.data);
+            // Verify token with our backend to ensure it's an authorized email
+            await api.post('/auth/verify', { idToken });
             setFirebaseUser(result.user);
             return true;
         } catch (e: any) {
@@ -84,15 +91,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const loginWithPin = async (pin: string): Promise<boolean> => {
+        setError(null);
+        setLoading(true);
+        try {
+            const resp = await api.post('/auth/login', { pin });
+            const authUser = resp.data;
+            sessionStorage.setItem('hawk_hub_user', JSON.stringify(authUser));
+            setUser(authUser);
+            return true;
+        } catch (e: any) {
+            setError(e.response?.data?.error || 'Invalid PIN');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const logout = async () => {
-        await signOut(auth);
+        await signOut(auth).catch(() => null);
+        sessionStorage.removeItem('hawk_hub_user');
         setUser(null);
         setFirebaseUser(null);
         setError(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, firebaseUser, loading, error, loginWithGoogle, logout }}>
+        <AuthContext.Provider value={{ user, firebaseUser, loading, error, loginWithGoogle, loginWithPin, logout }}>
             {children}
         </AuthContext.Provider>
     );

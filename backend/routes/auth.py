@@ -49,17 +49,8 @@ def verify_token():
                 "message": f"Your account ({email}) is not authorized to access The Nest. Please contact your administrator."
             }), 403
 
-        # Build initials from name
-        name = user.get("name") or display_name or email.split("@")[0]
-        parts = name.split()
-        initials = (parts[0][0] + parts[-1][0]).upper() if len(parts) >= 2 else name[:2].upper()
-
         return jsonify({
-            "role": user["role"],
-            "name": name,
-            "initials": initials,
-            "player_id": user.get("player_id"),
-            "jumper_no": user.get("player_id"),   # kept for backwards-compat
+            "authorized": True,
             "email": email,
         }), 200
 
@@ -70,3 +61,53 @@ def verify_token():
     except Exception as e:
         logger.error("Token verification failed: %s", str(e))
         return jsonify({"error": "Authentication failed. Please try again."}), 500
+
+
+@auth_bp.route("/login", methods=["POST"])
+def pin_login():
+    """
+    Validates a PIN for role selection after Google Auth.
+    0 = Coach
+    1-99 = Player Jumper Number
+    """
+    data = request.get_json()
+    pin = data.get("pin", "").strip()
+
+    if not pin:
+        return jsonify({"error": "PIN is required"}), 400
+
+    if pin == "0":
+        return jsonify({
+            "role": "coach",
+            "name": "Coaching Staff",
+            "initials": "CS",
+            "jumper_no": None,
+            "player_id": None
+        }), 200
+
+    try:
+        from db.alloydb_client import get_session
+        from models.players import Player
+        session = get_session()
+        jumper_no = int(pin)
+        
+        player = session.query(Player).filter_by(jumper_no=jumper_no).first()
+        if not player:
+            return jsonify({"error": "Invalid PIN. No player found with that jumper number."}), 401
+            
+        parts = player.name.split()
+        initials = (parts[0][0] + parts[-1][0]).upper() if len(parts) >= 2 else player.name[:2].upper()
+            
+        return jsonify({
+            "role": "player",
+            "name": player.name,
+            "initials": initials,
+            "jumper_no": player.jumper_no,
+            "player_id": player.jumper_no
+        }), 200
+        
+    except ValueError:
+        return jsonify({"error": "Invalid PIN format."}), 400
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        return jsonify({"error": "An error occurred during login."}), 500

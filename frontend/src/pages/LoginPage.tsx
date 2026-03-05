@@ -16,12 +16,21 @@ const GoogleIcon = () => (
 );
 
 const LoginPage = () => {
-    const { loginWithGoogle, error, loading } = useAuth();
+    const { loginWithGoogle, loginWithPin, error, loading, firebaseUser } = useAuth();
     const [isSigningIn, setIsSigningIn] = useState(false);
+    const [pin, setPin] = useState('');
 
     const handleGoogleSignIn = async () => {
         setIsSigningIn(true);
         await loginWithGoogle();
+        setIsSigningIn(false);
+    };
+
+    const handlePinSignIn = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!pin.trim()) return;
+        setIsSigningIn(true);
+        await loginWithPin(pin);
         setIsSigningIn(false);
     };
 
@@ -52,7 +61,9 @@ const LoginPage = () => {
                     <div className="text-center">
                         <h2 className="text-white font-bold text-xl">Welcome Back</h2>
                         <p className="text-amber-300/50 text-sm font-medium mt-1">
-                            Sign in with your authorised Google account
+                            {!firebaseUser
+                                ? "Sign in with your authorised Google account"
+                                : "Enter your PIN or Jumper Number"}
                         </p>
                     </div>
 
@@ -66,19 +77,43 @@ const LoginPage = () => {
                         </div>
                     )}
 
-                    {/* Google Sign In Button */}
-                    <button
-                        onClick={handleGoogleSignIn}
-                        disabled={loading || isSigningIn}
-                        className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 font-bold py-4 px-6 rounded-2xl text-sm hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-black/20 active:scale-95"
-                    >
-                        {isSigningIn || loading ? (
-                            <Loader2 size={20} className="animate-spin text-gray-500" />
-                        ) : (
-                            <GoogleIcon />
-                        )}
-                        {isSigningIn || loading ? 'Signing in...' : 'Sign in with Google'}
-                    </button>
+                    {/* Conditional Login Steps */}
+                    {!firebaseUser ? (
+                        <button
+                            onClick={handleGoogleSignIn}
+                            disabled={loading || isSigningIn}
+                            className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 font-bold py-4 px-6 rounded-2xl text-sm hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-black/20 active:scale-95"
+                        >
+                            {isSigningIn || loading ? (
+                                <Loader2 size={20} className="animate-spin text-gray-500" />
+                            ) : (
+                                <GoogleIcon />
+                            )}
+                            {isSigningIn || loading ? 'Signing in...' : 'Sign in with Google'}
+                        </button>
+                    ) : (
+                        <form onSubmit={handlePinSignIn} className="space-y-4">
+                            <div>
+                                <input
+                                    type="text"
+                                    value={pin}
+                                    onChange={(e) => setPin(e.target.value)}
+                                    placeholder="e.g. 0 (Coach) or 5 (Player)"
+                                    className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 px-6 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold-400 font-mono text-center text-xl tracking-widest"
+                                    disabled={loading || isSigningIn}
+                                    autoFocus
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={!pin || loading || isSigningIn}
+                                className="w-full flex items-center justify-center gap-2 bg-gold-500 hover:bg-gold-400 text-white font-bold py-4 px-6 rounded-2xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-gold-500/20 active:scale-95"
+                            >
+                                {isSigningIn || loading ? <Loader2 size={20} className="animate-spin" /> : null}
+                                {isSigningIn || loading ? 'Verifying...' : 'Access Dashboard'}
+                            </button>
+                        </form>
+                    )}
 
                     <div className="pt-4 border-t border-white/5 text-center">
                         <p className="text-amber-300/30 text-[10px] font-bold uppercase tracking-widest">
