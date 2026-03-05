@@ -372,9 +372,11 @@ def initialize_and_seed():
         logger.info("Seeding user_roles access control list...")
         user_roles_to_seed = [
             # ── Coaches / Staff ──────────────────────────────────────────────
-            # Replace these with the actual Google emails for your coaching staff.
-            {"email": "coach@hawthornfc.com.au", "role": "coach",  "player_id": None, "name": "Head Coach"},
-            {"email": "admin@hawthornfc.com.au", "role": "coach",  "player_id": None, "name": "Admin Staff"},
+            # authorised Intelia staff members with Coach access.
+            {"email": "joel.collins@intelia.com.au",   "role": "coach",  "player_id": None, "name": "Joel Collins"},
+            {"email": "direnc.uysal@intelia.com.au",   "role": "coach",  "player_id": None, "name": "Direnc Uysal"},
+            {"email": "bill.carlin@intelia.com.au",    "role": "coach",  "player_id": None, "name": "Bill Carlin"},
+            {"email": "daniel.zillmann@intelia.com.au", "role": "coach",  "player_id": None, "name": "Daniel Zillmann"},
             # ── Players ───────────────────────────────────────────────────────
             # Format: real Google email → player's jumper_no
             # Replace with actual player emails
