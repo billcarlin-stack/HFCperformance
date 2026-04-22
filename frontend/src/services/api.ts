@@ -145,7 +145,6 @@ export interface RatingResponse {
 }
 
 export interface TeamMatrixResponse {
-    date: string;
     players: { id: number; name: string }[];
     skills: string[];
     matrix: Record<number, Record<string, { coach: number; self: number }>>;
@@ -207,6 +206,9 @@ export interface TeamPosition {
     notes: string;
     rotation_color?: string;
     rotation_minutes?: number;
+    x?: number; // 0-100 percentage on field
+    y?: number; // 0-100 percentage on field
+    label?: string; // optional position label (e.g. "FB")
 }
 
 export interface SavedSquad {
@@ -214,6 +216,43 @@ export interface SavedSquad {
     name: string;
     data: string;
     created_at: string;
+    round_name?: string;
+}
+
+export interface TeamVersion {
+    id: number;
+    round_id: number;
+    round_name: string;
+    name: string;
+    data: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Season {
+    id: number;
+    name: string;
+    is_current: boolean;
+}
+
+export interface Round {
+    id: number;
+    season_id: number;
+    name: string;
+    short_name: string;
+    match_date: string | null;
+    end_date: string | null;
+    sort_order: number;
+    opponent: string | null;
+    venue: string | null;
+    is_home: boolean | null;
+}
+
+export interface SeasonData {
+    season: Season;
+    rounds: Round[];
+    current_round: Round | null;
 }
 
 
@@ -237,41 +276,13 @@ export interface PlayerComparisonResponse {
     opponent_context: string;
 }
 
-// AFL Fantasy player IDs mapped by Hawthorn jumper number
-// Used to fetch official headshots from the AFL CDN
-const HFC_PLAYER_PHOTO_IDS: Record<number, number> = {
-    1: 1000,  // Harry Morrison — placeholder
-    2: 1333,  // Mitchell Lewis
-    3: 4712,  // Jai Newcombe
-    4: 1082,  // Jarman Impey
-    5: 1713,  // James Worpel
-    6: 514,   // James Sicily
-    7: 1822,  // Ned Reeves
-    8: 1113,  // Sam Frost
-    9: 2084,  // Changkuoth Jiath
-    10: 801,   // Karl Amon
-    12: 3726,  // Will Day
-    13: 1595,  // Dylan Moore
-    19: 2238,  // Jack Ginnivan
-    21: 5592,  // Nick Watson
-    22: 312,   // Luke Breust
-    25: 4034,  // Josh Ward
-    43: 500,   // Jack Gunston
-};
-
 export const formatPlayerImage = (id: number, url?: string, name?: string) => {
-    // Use a provided URL first
+    // Use the photo_url from the database (set by update_player_photos_afl.py)
     if (url && url.startsWith('http')) return url;
 
-    // Try AFL CDN with known player ID
-    const aflId = HFC_PLAYER_PHOTO_IDS[id];
-    if (aflId) {
-        return `https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/${aflId}.png`;
-    }
-
-    // Fallback: HFC-branded initials avatar (Brown background, Gold text)
+    // Fallback: dark-themed initials avatar
     const displayName = name ? encodeURIComponent(name) : `Player+${id}`;
-    return `https://ui-avatars.com/api/?name=${displayName}&background=4D2004&color=F6B000&size=200&length=2&font-size=0.4`;
+    return `https://ui-avatars.com/api/?name=${displayName}&background=221C16&color=C8A951&size=200&length=2&font-size=0.4`;
 };
 
 export const getMockProfile = (id: number) => ({
@@ -340,10 +351,16 @@ export const ApiService = {
         const response = await api.post('/injuries', data);
         return response.data;
     },
+    updateInjury: async (id: string, data: Partial<Injury>) => {
+        const response = await api.put(`/injuries/${id}`, data);
+        return response.data;
+    },
 
     // Ratings
-    getRatings: async (playerId: number | string) => {
-        const response = await api.get<RatingResponse>(`/ratings/${playerId}`);
+    getRatings: async (playerId: number | string, roundId?: number) => {
+        const params: any = {};
+        if (roundId) params.round_id = roundId;
+        const response = await api.get<RatingResponse>(`/ratings/${playerId}`, { params });
         return response.data;
     },
     submitRating: async (data: any) => {
@@ -351,13 +368,18 @@ export const ApiService = {
         return response.data;
     },
 
-    getTeamMatrix: async () => {
-        const response = await api.get<TeamMatrixResponse>('/ratings/matrix/team');
+    getTeamMatrix: async (category?: string, roundId?: number) => {
+        const params: any = {};
+        if (category) params.category = category;
+        if (roundId) params.round_id = roundId;
+        const response = await api.get<TeamMatrixResponse>('/ratings/matrix/team', { params });
         return response.data;
     },
 
-    getYearlyMatrix: async (playerId: number | string) => {
-        const response = await api.get<YearlyMatrixResponse>(`/ratings/matrix/yearly/${playerId}`);
+    getYearlyMatrix: async (playerId: number | string, category?: string) => {
+        const params: any = {};
+        if (category) params.category = category;
+        const response = await api.get<YearlyMatrixResponse>(`/ratings/matrix/yearly/${playerId}`, { params });
         return response.data;
     },
 
@@ -382,16 +404,73 @@ export const ApiService = {
         });
         return response.data;
     },
-    getSavedSquads: async () => {
-        const response = await api.get<SavedSquad[]>('/team/saved');
+    getSavedSquads: async (round?: string) => {
+        const params = round ? { round } : {};
+        const response = await api.get<SavedSquad[]>('/team/saved', { params });
         return response.data;
     },
-    saveSquad: async (name: string) => {
-        const response = await api.post('/team/saved', { name });
+    saveSquad: async (name: string, roundName?: string) => {
+        const response = await api.post('/team/saved', { name, round_name: roundName });
         return response.data;
     },
     loadSquad: async (squadId: number) => {
         const response = await api.post(`/team/saved/${squadId}/load`);
+        return response.data;
+    },
+
+    // Rounds & Season
+    getSeasons: async () => {
+        const response = await api.get<Season[]>('/rounds/seasons');
+        return response.data;
+    },
+    getCurrentSeason: async () => {
+        const response = await api.get<SeasonData>('/rounds/current-season');
+        return response.data;
+    },
+    getSeasonRounds: async (seasonId: number) => {
+        const response = await api.get<Round[]>(`/rounds/seasons/${seasonId}/rounds`);
+        return response.data;
+    },
+
+    // Team Versions
+    getVersions: async (roundId: number) => {
+        const response = await api.get<TeamVersion[]>('/team/versions', { params: { round_id: roundId } });
+        return response.data;
+    },
+    createVersion: async (roundId: number, name: string, data?: string) => {
+        const response = await api.post<TeamVersion>('/team/versions', { round_id: roundId, name, data });
+        return response.data;
+    },
+    activateVersion: async (versionId: number) => {
+        const response = await api.post<TeamVersion>(`/team/versions/${versionId}/activate`);
+        return response.data;
+    },
+    saveVersionData: async (versionId: number, data: string) => {
+        const response = await api.put(`/team/versions/${versionId}/data`, { data });
+        return response.data;
+    },
+    renameVersion: async (versionId: number, name: string) => {
+        const response = await api.put<TeamVersion>(`/team/versions/${versionId}/rename`, { name });
+        return response.data;
+    },
+    duplicateVersion: async (versionId: number, name?: string) => {
+        const response = await api.post<TeamVersion>(`/team/versions/${versionId}/duplicate`, { name });
+        return response.data;
+    },
+    copyVersionToRound: async (versionId: number, targetRoundId: number, name?: string) => {
+        const response = await api.post<TeamVersion>(`/team/versions/${versionId}/copy-to-round`, { target_round_id: targetRoundId, name });
+        return response.data;
+    },
+    deleteVersion: async (versionId: number) => {
+        const response = await api.delete(`/team/versions/${versionId}`);
+        return response.data;
+    },
+    getOpponentHistory: async (team: string, limit: number = 3) => {
+        const response = await api.get('/team/opponent-history', { params: { team, limit } });
+        return response.data;
+    },
+    getOpponentPlayers: async (team: string) => {
+        const response = await api.get<{ name: string; jumper_no: number; position: string; photo_url: string }[]>('/team/opponent-players', { params: { team } });
         return response.data;
     },
 
@@ -474,8 +553,113 @@ export const ApiService = {
     getEngagement: async (playerId: number | string) => {
         const response = await api.get<{ engagement: PlayerEngagement | null }>(`/engagement/${playerId}`);
         return response.data;
-    }
+    },
+
+    // Box Hill Players (VFL-listed only)
+    getBoxHillPlayers: async () => {
+        const response = await api.get<BoxHillPlayer[]>('/players/box-hill');
+        return response.data;
+    },
+
+    // ── Champion Data Analytics (GPS + match stats) ─────────────────────────
+    getAnalyticsMatches: async () => {
+        const response = await api.get<AnalyticsMatch[]>('/analytics/matches');
+        return response.data;
+    },
+    getMatchSummary: async (matchId: string) => {
+        const response = await api.get<AnalyticsPlayerSummary[]>(`/analytics/match/${matchId}/summary`);
+        return response.data;
+    },
+    getPlayerRounds: async (playerName: string) => {
+        const response = await api.get<AnalyticsPlayerRoundRow[]>(`/analytics/player/${encodeURIComponent(playerName)}/rounds`);
+        return response.data;
+    },
+    getSeasonAverages: async () => {
+        const response = await api.get<any[]>('/analytics/season-averages');
+        return response.data;
+    },
 };
+
+// ── Box Hill type ────────────────────────────────────────────────────────────
+export interface BoxHillPlayer {
+    jumper_no: number;
+    name: string;
+    dob: string | null;
+    age: number | null;
+    height_cm: number | null;
+    position: string;
+    community_club: string | null;
+    sponsor: string | null;
+    leadership_role: string | null;
+    photo_url: string | null;
+    listing_note: string | null;
+    status: 'Green' | 'Amber' | 'Red';
+    games: number;
+}
+
+// ── Analytics types ─────────────────────────────────────────────────────────
+export interface AnalyticsMatch {
+    match_id: string;
+    match_name: string;
+    match_date: string;
+    round_name: string;
+    round_number: string;
+    venue_name: string;
+    player_count: number;
+}
+
+export interface AnalyticsGpsAgg {
+    total_distance_m: number | null;
+    total_hs_dist_m: number | null;
+    total_sprints: number | null;
+    total_player_load: number | null;
+    max_vel: number | null;
+    avg_m_per_min: number | null;
+    hr_avg: number | null;
+    hr_max: number | null;
+    total_accels: number | null;
+    total_decels: number | null;
+    total_hmld: number | null;
+    total_field_min: number | null;
+}
+
+export interface AnalyticsMatchStats {
+    disposals: number | null;
+    kicks: number | null;
+    handballs: number | null;
+    marks: number | null;
+    tackles: number | null;
+    clearances: number | null;
+    free_kicks: number | null;
+    pressure_acts: number | null;
+    inside_50s: number | null;
+    rebound_50s: number | null;
+    metres_gained: number | null;
+    turnovers: number | null;
+    goals: number | null;
+    behinds: number | null;
+    time_on_ground: number | null;
+}
+
+export interface AnalyticsPlayerSummary {
+    player: string;
+    jersey: number;
+    position: string;
+    gps: AnalyticsGpsAgg;
+    match_stats: AnalyticsMatchStats;
+    quarters: Array<{ period_name: string; [k: string]: any }>;
+}
+
+export interface AnalyticsPlayerRoundRow {
+    match_id: string;
+    match_name: string;
+    match_date: string;
+    round_name: string;
+    round_number: string;
+    venue_name: string;
+    gps: AnalyticsGpsAgg;
+    match_stats: AnalyticsMatchStats;
+}
 
 export interface WellbeingSurvey {
     player_id: number;

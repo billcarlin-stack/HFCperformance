@@ -1,0 +1,44 @@
+
+Roster Table 3 size: (25, 2)
+[0, 1]
+[{0: nan, 1: nan}, {0: 'AFL Statistics Home', 1: 'AFL Statistics Home'}]
+
+Roster Table 10 size: (44, 8)
+[0, 1, 2, 3, 4, 5, 6, 7]
+[{0: 'No', 1: 'Name', 2: 'Games', 3: 'Age', 4: 'Date of Birth', 5: 'Height', 6: 'Origin', 7: 'Position'}, {0: '10', 1: 'Amon, Karl', 2: '198', 3: '30yr 7mth', 4: '19 Aug 1995', 5: '181cm', 6: 'Sandringham Dragons', 7: 'Defender'}]
+
+Roster Table 24 size: (14, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'All Players', 1: 'All Players', 2: 'All Players'}]
+
+Roster Table 25 size: (14, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'League Averages', 1: 'League Averages', 2: 'League Averages'}]
+
+Roster Table 27 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'Full AFL Draft History', 1: 'Full AFL Draft History', 2: 'Full AFL Draft History'}]
+
+Roster Table 28 size: (12, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'Rising Star Round by Round', 1: 'Rising Star Round by Round', 2: 'Rising Star Round by Round'}]
+
+Roster Table 31 size: (15, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'Full Brownlow Medal Count', 1: 'Full Brownlow Medal Count', 2: 'Full Brownlow Medal Count'}]
+
+Roster Table 32 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'All-Australian Team', 1: 'All-Australian Team', 2: 'All-Australian Team'}]
+
+Roster Table 33 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'AFL Crowds & Attendances', 1: 'AFL Crowds & Attendances', 2: 'AFL Crowds & Attendances'}]
+
+Roster Table 34 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'AFL Coaches', 1: 'AFL Coaches', 2: 'AFL Coaches'}]
+
+Roster Table 35 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'AFL Highlights', 1: 'AFL Highlights', 2: 'AFL Highlights'}]

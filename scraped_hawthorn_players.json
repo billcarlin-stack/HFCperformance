@@ -1,0 +1,862 @@
+[
+    {
+        "jumper_no": 10,
+        "name": "Karl Amon",
+        "age": 30,
+        "height_cm": 181,
+        "games": 198,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 32,
+        "name": "Cody Anderson",
+        "age": 20,
+        "height_cm": 183,
+        "games": 0,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 37,
+        "name": "Tom Barrass",
+        "age": 30,
+        "height_cm": 197,
+        "games": 179,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 24,
+        "name": "Josh Battle",
+        "age": 27,
+        "height_cm": 193,
+        "games": 153,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 36,
+        "name": "James Blanck",
+        "age": 25,
+        "height_cm": 196,
+        "games": 24,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 30,
+        "name": "Sam Butler",
+        "age": 23,
+        "height_cm": 184,
+        "games": 29,
+        "position": "Midfield Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 18,
+        "name": "Mabior Chol",
+        "age": 29,
+        "height_cm": 200,
+        "games": 112,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 16,
+        "name": "Massimo R D'Ambrosio",
+        "age": 22,
+        "height_cm": 178,
+        "games": 70,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 34,
+        "name": "Jack Dalton",
+        "age": 19,
+        "height_cm": 178,
+        "games": 1,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 12,
+        "name": "Will Day",
+        "age": 24,
+        "height_cm": 191,
+        "games": 76,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 13,
+        "name": "Calsher Dear",
+        "age": 20,
+        "height_cm": 195,
+        "games": 26,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 33,
+        "name": "Jack Ginnivan",
+        "age": 23,
+        "height_cm": 185,
+        "games": 94,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 35,
+        "name": "Ollie Greeves",
+        "age": 19,
+        "height_cm": 192,
+        "games": 0,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 19,
+        "name": "Jack Gunston",
+        "age": 34,
+        "height_cm": 193,
+        "games": 287,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 15,
+        "name": "Blake Hardwick",
+        "age": 29,
+        "height_cm": 183,
+        "games": 202,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 41,
+        "name": "Matt R Hill",
+        "age": 22,
+        "height_cm": 187,
+        "games": 0,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 44,
+        "name": "Henry Hustwaite",
+        "age": 21,
+        "height_cm": 195,
+        "games": 10,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 4,
+        "name": "Jarman Impey",
+        "age": 30,
+        "height_cm": 178,
+        "games": 225,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 31,
+        "name": "Matthew LeRay",
+        "age": 19,
+        "height_cm": 188,
+        "games": 0,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 2,
+        "name": "Mitchell Lewis",
+        "age": 27,
+        "height_cm": 199,
+        "games": 82,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 9,
+        "name": "Connor MacDonald",
+        "age": 23,
+        "height_cm": 185,
+        "games": 94,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 42,
+        "name": "Bailey Macdonald",
+        "age": 21,
+        "height_cm": 182,
+        "games": 8,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 28,
+        "name": "Cameron Mackenzie",
+        "age": 22,
+        "height_cm": 188,
+        "games": 48,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 20,
+        "name": "Finn Maginness",
+        "age": 25,
+        "height_cm": 189,
+        "games": 59,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 27,
+        "name": "William McCabe",
+        "age": 20,
+        "height_cm": 197,
+        "games": 0,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 17,
+        "name": "Lloyd Meek",
+        "age": 27,
+        "height_cm": 203,
+        "games": 81,
+        "position": "Ruck",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 8,
+        "name": "Dylan Moore",
+        "age": 26,
+        "height_cm": 177,
+        "games": 130,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 1,
+        "name": "Harry Morrison",
+        "age": 27,
+        "height_cm": 184,
+        "games": 124,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 21,
+        "name": "Noah Mraz",
+        "age": 20,
+        "height_cm": 198,
+        "games": 0,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 22,
+        "name": "Cameron Nairn",
+        "age": 18,
+        "height_cm": 188,
+        "games": 0,
+        "position": "Midfield Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 11,
+        "name": "Conor Nash",
+        "age": 27,
+        "height_cm": 198,
+        "games": 124,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 3,
+        "name": "Jai Newcombe",
+        "age": 24,
+        "height_cm": 187,
+        "games": 106,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 39,
+        "name": "Flynn R Perez",
+        "age": 24,
+        "height_cm": 188,
+        "games": 25,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 38,
+        "name": "Max R Ramsden",
+        "age": 22,
+        "height_cm": 203,
+        "games": 9,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 7,
+        "name": "Ned Reeves",
+        "age": 27,
+        "height_cm": 210,
+        "games": 46,
+        "position": "Ruck",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 26,
+        "name": "Bodie Ryan",
+        "age": 20,
+        "height_cm": 187,
+        "games": 0,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 29,
+        "name": "Aidan Schubert",
+        "age": 18,
+        "height_cm": 198,
+        "games": 0,
+        "position": "Forward Ruck",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 14,
+        "name": "Jack Scrimshaw",
+        "age": 27,
+        "height_cm": 194,
+        "games": 127,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 6,
+        "name": "James Sicily",
+        "age": 31,
+        "height_cm": 188,
+        "games": 183,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 43,
+        "name": "Jaime R Uhr-Henry",
+        "age": 23,
+        "height_cm": 209,
+        "games": 0,
+        "position": "Ruck",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 25,
+        "name": "Josh Ward",
+        "age": 22,
+        "height_cm": 183,
+        "games": 71,
+        "position": "Midfield",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 5,
+        "name": "Nick Watson",
+        "age": 21,
+        "height_cm": 170,
+        "games": 47,
+        "position": "Forward",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    },
+    {
+        "jumper_no": 23,
+        "name": "Joshua Weddle",
+        "age": 21,
+        "height_cm": 191,
+        "games": 64,
+        "position": "Defender",
+        "stats": {
+            "goals_avg": 0,
+            "disposals_avg": 0,
+            "marks_avg": 0,
+            "tackles_avg": 0,
+            "kicks_avg": 0,
+            "handballs_avg": 0,
+            "hitouts_avg": 0,
+            "clearances_avg": 0,
+            "af_avg": 0,
+            "rating_points": 0
+        }
+    }
+]

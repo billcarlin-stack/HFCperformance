@@ -1,0 +1,44 @@
+
+Table 3 size: (25, 2)
+[0, 1]
+[{0: nan, 1: nan}, {0: 'AFL Statistics Home', 1: 'AFL Statistics Home'}]
+
+Table 8 size: (79, 15)
+['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11', 'Unnamed: 12', 'Unnamed: 13', 'Unnamed: 14']
+[{'Unnamed: 0': 'Home Averages', 'Unnamed: 1': 'Home Averages', 'Unnamed: 2': 'Home Averages', 'Unnamed: 3': 'Home Averages', 'Unnamed: 4': 'Home Averages', 'Unnamed: 5': 'Home Averages', 'Unnamed: 6': 'Home Averages', 'Unnamed: 7': 'Home Averages', 'Unnamed: 8': 'Home Averages', 'Unnamed: 9': 'Home Averages', 'Unnamed: 10': 'Home Averages', 'Unnamed: 11': 'Home Averages', 'Unnamed: 12': 'Home Averages', 'Unnamed: 13': 'Home Averages', 'Unnamed: 14': 'Home Averages'}, {'Unnamed: 0': nan, 'Unnamed: 1': nan, 'Unnamed: 2': 'Team', 'Unnamed: 3': 'Games', 'Unnamed: 4': 'Kicks', 'Unnamed: 5': 'Handballs', 'Unnamed: 6': 'Disposals', 'Unnamed: 7': 'Marks', 'Unnamed: 8': 'Tackles', 'Unnamed: 9': 'Goals', 'Unnamed: 10': 'Behinds', 'Unnamed: 11': 'Hitouts', 'Unnamed: 12': 'Frees For', 'Unnamed: 13': 'Frees Ag.', 'Unnamed: 14': nan}]
+
+Table 22 size: (14, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'All Players', 1: 'All Players', 2: 'All Players'}]
+
+Table 23 size: (14, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'League Averages', 1: 'League Averages', 2: 'League Averages'}]
+
+Table 25 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'Full AFL Draft History', 1: 'Full AFL Draft History', 2: 'Full AFL Draft History'}]
+
+Table 26 size: (12, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'Rising Star Round by Round', 1: 'Rising Star Round by Round', 2: 'Rising Star Round by Round'}]
+
+Table 29 size: (15, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'Full Brownlow Medal Count', 1: 'Full Brownlow Medal Count', 2: 'Full Brownlow Medal Count'}]
+
+Table 30 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'All-Australian Team', 1: 'All-Australian Team', 2: 'All-Australian Team'}]
+
+Table 31 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'AFL Crowds & Attendances', 1: 'AFL Crowds & Attendances', 2: 'AFL Crowds & Attendances'}]
+
+Table 32 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'AFL Coaches', 1: 'AFL Coaches', 2: 'AFL Coaches'}]
+
+Table 33 size: (11, 3)
+[0, 1, 2]
+[{0: '✖', 1: '✖', 2: '✖'}, {0: 'AFL Highlights', 1: 'AFL Highlights', 2: 'AFL Highlights'}]

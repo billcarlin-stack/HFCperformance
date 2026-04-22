@@ -10,87 +10,78 @@ import { ApiService, formatPlayerImage } from '../services/api';
 import type { Player } from '../services/api';
 import { Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import clsx from 'clsx';
+import { PositionFilter, matchesPositionFilter } from '../components/common/PositionFilter';
+import type { PositionGroup } from '../components/common/PositionFilter';
 
 const PlayerCard = ({ player }: { player: Player }) => {
-    const statusGlow = {
-        Green: 'group-hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] border-emerald-500/20',
-        Amber: 'group-hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] border-gold-500/20',
-        Red: 'group-hover:shadow-[0_0_30px_rgba(239,68,68,0.3)] border-rose-500/20',
+    const statusColors = {
+        Green: 'ring-green-500 shadow-green-500/20',
+        Amber: 'ring-amber-500 shadow-amber-500/20',
+        Red: 'ring-red-500 shadow-red-500/20',
     };
 
-    const statusBadge = {
-        Green: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-        Amber: 'bg-gold-500/10 text-gold-400 border-gold-500/20',
-        Red: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    const statusText = {
+        Green: 'bg-green-500/10 text-green-400',
+        Amber: 'bg-amber-500/10 text-amber-400',
+        Red: 'bg-red-500/10 text-red-400',
     };
 
     return (
         <Link
             to={`/players/${player.jumper_no}`}
-            className={clsx(
-                "group premium-card p-6 flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-2 relative overflow-hidden",
-                statusGlow[player.status]
-            )}
+            className={`group relative bg-hawks-card rounded-2xl p-6 hover:shadow-card transition-all duration-300 flex flex-col items-center text-center border border-white/5 hover:-translate-y-1 block
+        ring-1 ring-transparent hover:ring-offset-2 hover:ring-offset-hawks-base ${statusColors[player.status]}
+      `}
         >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-white/10 transition-all duration-700"></div>
-            
             {/* Status Badge */}
-            <div className={clsx(
-                "absolute top-4 right-4 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border backdrop-blur-md z-10 font-work",
-                statusBadge[player.status]
-            )}>
+            <div className={`absolute top-4 right-4 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusText[player.status]}`}>
                 {player.status}
             </div>
 
             {/* Jumper Badge */}
-            <div className="absolute top-4 left-4 w-7 h-7 rounded-xl bg-hfc-brown border border-gold-400/20 text-gold-400 flex items-center justify-center text-[10px] font-black font-space shadow-lg z-10 group-hover:scale-110 transition-transform duration-500">
+            <div className="absolute top-4 left-4 w-6 h-6 rounded-full bg-hfc-brown text-white flex items-center justify-center text-xs font-bold font-mono">
                 {player.jumper_no}
             </div>
 
             {/* Image */}
-            <div className="relative mt-2 mb-6">
-                <div className={clsx(
-                    "absolute inset-0 rounded-full blur-[20px] opacity-0 group-hover:opacity-40 transition-opacity duration-700",
-                    player.status === 'Green' ? 'bg-emerald-500' : player.status === 'Amber' ? 'bg-gold-500' : 'bg-rose-500'
-                )} />
-                <div className="w-28 h-28 rounded-full border-2 border-white/5 p-1 bg-[#1A1411] shadow-2xl relative z-10 overflow-hidden">
-                    <img
-                        src={formatPlayerImage(player.jumper_no, player.photo_url, player.name)}
-                        alt={player.name}
-                        className="w-full h-full object-cover rounded-full grayscale-[30%] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
-                        loading="lazy"
-                        onError={(e) => {
-                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}&background=4D2004&color=F6B000&size=200&length=2&font-size=0.4`;
-                        }}
-                    />
-                </div>
+            <div className={`relative w-24 h-24 rounded-full p-1 ring-2 ring-offset-2 ring-offset-hawks-card mb-4 group-hover:scale-105 transition-transform ${statusColors[player.status].split(' ')[0]}`}>
+                <img
+                    src={formatPlayerImage(player.jumper_no, player.photo_url, player.name)}
+                    alt={player.name}
+                    className="w-full h-full object-cover rounded-full bg-hawks-hover"
+                    loading="lazy"
+                    onError={(e) => {
+                        // Fallback to HFC initials avatar if AFL CDN fails
+                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}&background=4D2004&color=F6B000&size=200&length=2&font-size=0.4`;
+                    }}
+                />
             </div>
 
             {/* Info */}
-            <h3 className="font-black text-white text-xl leading-tight mb-2 font-space uppercase tracking-tight group-hover:text-gold-400 transition-colors">{player.name}</h3>
-            <p className="stat-label !text-[8px] opacity-40 uppercase tracking-[0.3em] font-work mb-6">/ {player.position}</p>
+            <h3 className="font-bold text-gray-100 text-lg leading-tight mb-1">{player.name}</h3>
+            <p className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-3" style={{ fontFamily: 'Work Sans, sans-serif' }}>{player.position}</p>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-4 w-full pt-6 border-t border-white/5 relative z-10">
-                <div className="flex flex-col gap-1">
-                    <span className="text-sm font-black text-white font-space">{player.age}</span>
-                    <span className="stat-label !text-[7px] uppercase opacity-30">YRS</span>
+            <div className="flex items-center gap-3 text-sm text-gray-400 border-t border-white/5 pt-3 w-full justify-center">
+                <div className="flex flex-col">
+                    <span className="font-bold text-gray-100">{player.age}</span>
+                    <span className="text-[10px] text-gray-500 uppercase">Yrs</span>
                 </div>
-                <div className="flex flex-col gap-1 border-x border-white/5">
-                    <span className="text-sm font-black text-white font-space">{player.games}</span>
-                    <span className="stat-label !text-[7px] uppercase opacity-30">GMS</span>
+                <div className="w-px h-6 bg-white/10"></div>
+                <div className="flex flex-col">
+                    <span className="font-bold text-gray-100">{player.games}</span>
+                    <span className="text-[10px] text-gray-500 uppercase">Gms</span>
                 </div>
                 {player.readiness && (
-                    <div className="flex flex-col gap-1">
-                        <span className={clsx(
-                            "text-sm font-black font-space",
-                            player.readiness.score > 8 ? 'text-emerald-400' : 'text-gold-400'
-                        )}>
-                            {player.readiness.score.toFixed(1)}
-                        </span>
-                        <span className="stat-label !text-[7px] uppercase opacity-30">RDY</span>
-                    </div>
+                    <>
+                        <div className="w-px h-6 bg-white/10"></div>
+                        <div className="flex flex-col">
+                            <span className={`font-bold ${player.readiness.score > 8 ? 'text-green-400' : 'text-amber-400'}`}>
+                                {player.readiness.score.toFixed(1)}
+                            </span>
+                            <span className="text-[10px] text-gray-500 uppercase">Rdy</span>
+                        </div>
+                    </>
                 )}
             </div>
         </Link>
@@ -100,6 +91,7 @@ const PlayerCard = ({ player }: { player: Player }) => {
 export const PlayersList = () => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [search, setSearch] = useState('');
+    const [posFilter, setPosFilter] = useState<PositionGroup>('ALL');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -108,44 +100,46 @@ export const PlayersList = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    const filtered = players.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.jumper_no.toString().includes(search)
-    );
+    const filtered = players.filter(p => {
+        const matchesSearch =
+            p.name.toLowerCase().includes(search.toLowerCase()) ||
+            p.jumper_no.toString().includes(search);
+        return matchesSearch && matchesPositionFilter(p.position, posFilter);
+    });
 
     return (
-        <div className="space-y-12 animate-in fade-in duration-700">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                        <span className="h-[1px] w-10 bg-gold-400/40"></span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gold-400/80 font-work">Playing List</span>
-                    </div>
-                    <h1 className="text-5xl font-black text-white uppercase tracking-tight font-space">The Squad</h1>
+        <div className="space-y-8">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Playing List</h1>
+                    <p className="text-gray-400">Squad overview and readiness status.</p>
                 </div>
 
-                <div className="relative group">
-                    <div className="absolute inset-0 bg-gold-400/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-400 transition-colors" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Filter by name or jumper..."
-                        className="pl-12 pr-6 py-4 bg-white/5 border border-white/10 rounded-[2rem] w-full md:w-80 focus:ring-1 focus:ring-gold-400 focus:border-transparent outline-none shadow-2xl backdrop-blur-md text-white font-work placeholder:text-white/10 transition-all"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                <div className="flex items-center gap-3">
+                    <PositionFilter value={posFilter} onChange={setPosFilter} />
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search player..."
+                            className="pl-10 pr-4 py-2 bg-hawks-card border border-white/10 rounded-lg w-64 focus:ring-2 focus:ring-hawks-gold/30 focus:border-transparent outline-none text-gray-100 placeholder-gray-500"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {/* Grid Layout */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {loading ? (
                     // Skeleton Loader
                     [...Array(8)].map((_, i) => (
-                        <div key={i} className="premium-card p-8 flex flex-col items-center animate-pulse">
-                            <div className="w-28 h-28 rounded-full bg-white/5 mb-6"></div>
-                            <div className="h-6 bg-white/5 w-40 rounded-full mb-3"></div>
-                            <div className="h-2 bg-white/5 w-24 rounded-full mb-8"></div>
-                            <div className="h-10 bg-white/5 w-full rounded-[1.5rem]"></div>
+                        <div key={i} className="bg-hawks-card rounded-2xl p-6 border border-white/5 flex flex-col items-center animate-pulse">
+                            <div className="w-24 h-24 rounded-full bg-hawks-hover mb-4"></div>
+                            <div className="h-4 bg-hawks-hover w-32 rounded mb-2"></div>
+                            <div className="h-3 bg-hawks-hover w-20 rounded mb-4"></div>
+                            <div className="h-8 bg-hawks-base w-full rounded"></div>
                         </div>
                     ))
                 ) : filtered.length > 0 ? (
@@ -153,7 +147,7 @@ export const PlayersList = () => {
                         <PlayerCard key={player.jumper_no} player={player} />
                     ))
                 ) : (
-                    <div className="col-span-full py-20 text-center text-white/40">
+                    <div className="col-span-full py-20 text-center text-gray-500">
                         No players found matching "{search}"
                     </div>
                 )}

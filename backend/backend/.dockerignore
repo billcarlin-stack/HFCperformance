@@ -1,0 +1,11 @@
+# The Hawk Hub — Backend
+# .dockerignore
+
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+.env
+*.md
+seeds/

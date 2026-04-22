@@ -16,7 +16,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ApiService, formatPlayerImage, getMatchRatings } from '../services/api';
 
-import type { Player, Injury, PlayerStats, PlayerEngagement } from '../services/api';
+import type { Player, Injury, PlayerStats, PlayerEngagement, AnalyticsPlayerRoundRow } from '../services/api';
 import {
     ChevronLeft, Share2, Printer, Activity, Target,
     User, Trophy, MapPin, GraduationCap, Heart,
@@ -33,7 +33,7 @@ import AddPlayerToTeamModal from '../components/modals/AddPlayerToTeamModal';
 
 
 const NativeMatchRatingsChart = ({ data, size }: { data: any[]; size: { w: number; h: number } }) => {
-    if (!data || data.length === 0) return <div className="flex h-full items-center justify-center text-white/40 font-medium">No match rating data available.</div>;
+    if (!data || data.length === 0) return <div className="flex h-full items-center justify-center text-gray-500 font-medium">No match rating data available.</div>;
 
     const padding = { top: 40, right: 20, bottom: 60, left: 20 };
     const chartW = size.w - padding.left - padding.right;
@@ -56,19 +56,17 @@ const NativeMatchRatingsChart = ({ data, size }: { data: any[]; size: { w: numbe
                 const x = padding.left + i * xStep + (xStep - barWidth) / 2;
                 const h = (d.rating / 5) * chartH;
                 const y = padding.top + chartH - h;
-                const color = d.rating >= 4 ? '#10B981' : d.rating >= 3 ? '#F59E0B' : '#EF4444';
-                
+                const color = d.rating >= 4 ? '#22C55E' : d.rating >= 3 ? '#F59E0B' : '#EF4444';
+
                 return (
                     <g key={`bar-${i}`}>
-                        <rect x={x} y={y} width={barWidth} height={h} fill={color} fillOpacity="0.8" rx="4" />
+                        <rect x={x} y={y} width={barWidth} height={h} fill={color} rx="4" />
                         <text
                             x={padding.left + i * xStep + xStep / 2}
                             y={size.h - padding.bottom + 20}
                             textAnchor="middle"
-                            fill="rgba(255,255,255,0.3)"
-                            fontSize="8"
-                            fontWeight="bold"
-                            fontFamily="Space Grotesk"
+                            fill="#6b7280"
+                            fontSize="10"
                             transform={`rotate(-45, ${padding.left + i * xStep + xStep / 2}, ${size.h - padding.bottom + 20})`}
                         >
                             {d.round}
@@ -81,18 +79,18 @@ const NativeMatchRatingsChart = ({ data, size }: { data: any[]; size: { w: numbe
             <polyline
                 points={linePoints}
                 fill="none"
-                stroke="#F6B000"
-                strokeWidth="2"
+                stroke="#C8A951"
+                strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-            
+
             {/* Line Dots */}
             {data.map((d, i) => {
                 const x = padding.left + i * xStep + xStep / 2;
                 const y = getY(d.avg3);
                 return (
-                    <circle key={`dot-${i}`} cx={x} cy={y} r="3" fill="#F6B000" stroke="#0F0A07" strokeWidth="1.5" />
+                    <circle key={`dot-${i}`} cx={x} cy={y} r="4" fill="#C8A951" stroke="#1a1a2e" strokeWidth="2" />
                 );
             })}
         </svg>
@@ -102,59 +100,53 @@ const NativeMatchRatingsChart = ({ data, size }: { data: any[]; size: { w: numbe
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const ProfileHeader = ({ player, stats2025, isCoach }: { player: Player; stats2025: PlayerStats | null; isCoach: boolean }) => (
-    <div className="premium-card p-10 bg-hfc-brown border-none shadow-gold-glow relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gold-400/5 rounded-full -mr-32 -mt-32 blur-[120px] group-hover:bg-gold-400/10 transition-all duration-1000" />
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+
+    <div className="bg-hfc-brown rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-hfc-brown/20 to-transparent" />
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
             {/* Photo */}
-            <div className="relative">
-                <div className="absolute inset-0 bg-gold-400 rounded-full blur-[30px] opacity-20 group-hover:opacity-40 transition-opacity" />
-                <div className="w-48 h-48 rounded-full border-2 border-gold-400/30 p-1.5 bg-[#1A1411] shadow-2xl relative z-10 overflow-hidden">
+            <div className="relative group">
+                <div className="absolute inset-0 bg-gold-400 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity" />
+                <div className="w-40 h-40 rounded-full border-4 border-gold-400 p-1 bg-hfc-brown shadow-lg relative z-10">
                     <img
                         src={formatPlayerImage(player.jumper_no, player.photo_url, player.name)}
                         alt={player.name}
-                        className="w-full h-full object-cover rounded-full grayscale-[20%] hover:grayscale-0 transition-all duration-700 hover:scale-105"
+                        className="w-full h-full object-cover rounded-full bg-gray-800"
                         onError={(e) => {
                             e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}&background=4D2004&color=F6B000&size=200&length=2&font-size=0.4`;
                         }}
                     />
                 </div>
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gold-500 text-[#0F0A07] text-[10px] font-black px-4 py-1.5 rounded-full shadow-[0_5px_15px_rgba(246,176,0,0.4)] z-20 uppercase tracking-widest font-space">
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gold-400 text-hfc-brown text-sm font-bold px-3 py-1 rounded-full shadow-md z-20">
                     #{player.jumper_no}
                 </div>
             </div>
 
             {/* Info */}
-            <div className="text-center md:text-left flex-1 space-y-4">
-                <div className="space-y-1">
-                    <div className="flex items-center justify-center md:justify-start gap-3">
-                        <span className="h-[1px] w-8 bg-gold-400/40"></span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gold-400/80 font-work">Elite Profile</span>
-                    </div>
-                    <h1 className="text-5xl font-black text-white uppercase tracking-tight font-space">{player.name}</h1>
-                </div>
-                
-                <div className="flex flex-wrap justify-center md:justify-start gap-4 text-white/50 text-[10px] font-black uppercase tracking-[0.2em] font-work italic">
+            <div className="text-center md:text-left flex-1">
+                <h1 className="text-4xl md:text-5xl font-bold mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{player.name}</h1>
+                <div className="flex flex-wrap justify-center md:justify-start gap-4 text-amber-200 text-sm font-medium uppercase tracking-wider mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>
                     <span>{player.position}</span>
-                    <span className="text-gold-500/30">/</span>
+                    <span className="text-gold-400">•</span>
                     <span>{player.originally_from || 'VIC Metro'}</span>
                 </div>
 
-                <div className="flex flex-wrap justify-center md:justify-start gap-10 pt-4">
+                <div className="flex flex-wrap justify-center md:justify-start gap-8 mt-6">
                     {[
                         { value: player.age, label: 'Age' },
                         { value: player.height_cm, label: 'Height (cm)' },
                         { value: player.weight_kg, label: 'Weight (kg)' },
                         { value: player.games, label: 'Games', gold: true },
                     ].map(({ value, label, gold }) => (
-                        <div key={label} className="text-center md:text-left">
-                            <div className={`text-4xl stat-value ${gold ? 'text-gold-400' : 'text-white'}`}>{value}</div>
-                            <div className="stat-label !text-[8px] opacity-50 mt-1">{label}</div>
+                        <div key={label} className="text-center">
+                            <div className={`text-2xl font-bold ${gold ? 'text-gold-400' : 'text-white'}`}>{value}</div>
+                            <div className="text-[10px] text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'Work Sans, sans-serif' }}>{label}</div>
                         </div>
                     ))}
                 </div>
 
                 {stats2025 && (
-                    <div className="mt-8 pt-8 border-t border-white/5 flex flex-wrap justify-center md:justify-start gap-x-10 gap-y-6">
+                    <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap justify-center md:justify-start gap-x-8 gap-y-4">
                         {[
                             { label: 'AF Avg', value: stats2025.af_avg },
                             { label: 'Disposals', value: stats2025.disposals_avg },
@@ -163,8 +155,8 @@ const ProfileHeader = ({ player, stats2025, isCoach }: { player: Player; stats20
                             { label: 'Goals', value: stats2025.goals_avg },
                         ].map(({ label, value }) => (
                             <div key={label} className="flex flex-col">
-                                <span className="stat-label !text-[7px] text-gold-400/60 mb-2">{label}</span>
-                                <span className="text-xl font-black text-white font-space">{Number(value ?? 0).toFixed(1)}</span>
+                                <span className="text-[10px] text-amber-300 font-black uppercase tracking-widest mb-1" style={{ fontFamily: 'Work Sans, sans-serif' }}>{label}</span>
+                                <span className="text-xl font-black text-white">{Number(value ?? 0).toFixed(1)}</span>
                             </div>
                         ))}
                     </div>
@@ -172,74 +164,68 @@ const ProfileHeader = ({ player, stats2025, isCoach }: { player: Player; stats20
             </div>
 
             {/* Readiness */}
-            <div className="hidden md:flex flex-col items-end gap-6">
-                <div className="text-right group">
-                    <div className="stat-label !text-[9px] mb-2 opacity-50">Match Readiness</div>
-                    <div className={`text-7xl font-space font-black tracking-tighter ${player.readiness && player.readiness.score > 8 ? 'text-emerald-400' : 'text-gold-400'} group-hover:scale-105 transition-transform duration-500`}>
+            <div className="hidden md:flex flex-col items-end gap-4">
+                <div className="text-right">
+                    <div className={`text-6xl font-black ${player.readiness && player.readiness.score > 8 ? 'text-green-400' : 'text-gold-400'}`}>
                         {player.readiness?.score ? Number(player.readiness.score).toFixed(1) : '—'}
                     </div>
+                    <div className="text-xs text-amber-300 uppercase tracking-widest">Readiness</div>
                 </div>
-                
+
                 {isCoach && (
-                    <button 
+                    <button
                         onClick={() => (window as any).openTeamModal?.()}
-                        className="flex items-center gap-3 px-8 py-4 bg-gold-500 text-[#0F0A07] rounded-full font-black text-[10px] uppercase tracking-[0.2em] font-work hover:bg-white hover:scale-105 transition-all shadow-[0_10px_30px_-5px_rgba(246,176,0,0.4)]"
+                        className="flex items-center gap-2 px-6 py-3 bg-gold-400 text-hfc-brown rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-white transition-all shadow-[0_10px_20px_-5px_rgba(246,176,0,0.4)]"
                     >
                         <Plus size={16} />
-                        Assign to Squad
+                        Add to Team
                     </button>
                 )}
             </div>
+
         </div>
     </div>
 );
-
 
 const InfoRow = ({ icon: Icon, label, value }: { icon: any; label: string; value?: string | boolean | number | null }) => {
     if (value === null || value === undefined || value === '') return null;
     const display = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value);
     return (
-        <div className="flex items-start gap-4 py-4 border-b border-white/5 last:border-0 group">
-            <div className="p-2 bg-white/5 rounded-lg text-gold-400 transition-colors group-hover:bg-gold-400/10 group-hover:text-gold-300">
-                <Icon size={14} className="flex-shrink-0" />
-            </div>
-            <div className="flex-1 flex justify-between items-center">
-                <span className="stat-label !text-[8px] opacity-40">{label}</span>
-                <span className="text-xs font-bold text-white/80 text-right font-work uppercase tracking-wider">{display}</span>
+        <div className="flex items-start gap-3 py-3 border-b border-white/5 last:border-0">
+            <Icon size={16} className="text-hawks-gold mt-0.5 flex-shrink-0" />
+            <div className="flex-1 flex justify-between items-start">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest" style={{ fontFamily: 'Work Sans, sans-serif' }}>{label}</span>
+                <span className="text-sm font-semibold text-gray-100 text-right max-w-[60%]">{display}</span>
             </div>
         </div>
     );
 };
 
 const Card = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
-    <div className="premium-card p-8">
-        <h3 className="font-black text-xs text-white mb-6 flex items-center gap-3 uppercase tracking-[0.2em] font-space">
-            <div className="p-2 bg-white/5 rounded-xl text-gold-400">
-                <Icon size={18} />
-            </div>
+    <div className="bg-hawks-card p-6 rounded-2xl border border-white/5">
+        <h3 className="font-bold text-base text-gray-100 mb-4 flex items-center gap-2 border-b-2 border-hawks-gold pb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <Icon size={18} className="text-hawks-gold" />
             {title}
         </h3>
-        <div className="mt-4">
-            {children}
-        </div>
+        {children}
     </div>
 );
 
 const TierBadge = ({ tier }: { tier?: number | null }) => {
-    const colors = ['', 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20', 'bg-blue-500/10 text-blue-400 border border-blue-500/20', 'bg-gold-500/10 text-gold-400 border border-gold-500/20', 'bg-rose-500/10 text-rose-400 border border-rose-500/20'];
+    const colors = ['', 'bg-green-500/10 text-green-400', 'bg-blue-500/10 text-blue-400', 'bg-amber-500/10 text-amber-400', 'bg-red-500/10 text-red-400'];
     const labels = ['', 'Tier 1 — Light', 'Tier 2 — Moderate', 'Tier 3 — High', 'Tier 4 — Elite'];
-    if (!tier) return <span className="text-white/40 text-sm">—</span>;
+    if (!tier) return <span className="text-gray-500 text-sm">—</span>;
     return (
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${colors[tier] ?? 'bg-white/5 text-white/80'}`}>
+        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${colors[tier] ?? 'bg-hawks-hover text-gray-400'}`}>
             {labels[tier] ?? `Tier ${tier}`}
         </span>
     );
 };
 
 const AttributeCard = ({ title, text }: { title: string; text?: string }) => (
-    <div className="premium-card p-6 flex flex-col h-full bg-hfc-brown border-none shadow-gold-glow-none hover:shadow-gold-glow transition-all duration-500 group">
-        <h3 className="stat-label !text-[8px] text-gold-400 mb-2 group-hover:text-white transition-colors uppercase tracking-[0.3em]">{title}</h3>
-        <p className="text-white font-space font-black text-xl leading-tight uppercase group-hover:text-gold-400 transition-colors">{text || '—'}</p>
+    <div className="bg-hawks-card p-5 rounded-2xl border border-white/5 flex flex-col h-full">
+        <h3 className="text-hawks-gold text-xs font-bold uppercase tracking-widest mb-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>{title}</h3>
+        <p className="text-gray-100 font-medium text-lg leading-snug">{text || '—'}</p>
     </div>
 );
 
@@ -262,6 +248,7 @@ export const PlayerDetail = () => {
     const [fitnessSession, setFitnessSession] = useState<any>(null);
     const [fitnessPBs, setFitnessPBs] = useState<any>(null);
     const [engagement, setEngagement] = useState<PlayerEngagement | null>(null);
+    const [playerRounds, setPlayerRounds] = useState<AnalyticsPlayerRoundRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'personal' | 'footy' | 'fitness'>('personal');
     const [showTeamModal, setShowTeamModal] = useState(false);
@@ -300,6 +287,12 @@ export const PlayerDetail = () => {
                     if (p.value.jumper_no) {
                         setMatchRatings(getMatchRatings(p.value.jumper_no));
                     }
+                    // Fetch round-by-round match + GPS history for this player (by name)
+                    if (p.value.name) {
+                        ApiService.getPlayerRounds(p.value.name)
+                            .then(rows => setPlayerRounds(Array.isArray(rows) ? rows : []))
+                            .catch(() => setPlayerRounds([]));
+                    }
                 }
                 if (allInj.status === 'fulfilled' && Array.isArray(allInj.value)) setPlayerInjuries(allInj.value.filter((i: Injury) => i.player_id === Number(id)));
 
@@ -322,8 +315,8 @@ export const PlayerDetail = () => {
     }, []);
 
     // ── Early returns AFTER all hooks ──
-    if (loading) return <div className="p-20 text-center text-white/40">Loading Profile...</div>;
-    if (!player) return <div className="p-20 text-center text-white/40">Player not found</div>;
+    if (loading) return <div className="p-20 text-center text-gray-500">Loading Profile...</div>;
+    if (!player) return <div className="p-20 text-center text-gray-500">Player not found</div>;
 
     // ── Derived state (computed after hooks) ──
     const chartMatchData = matchRatings.map((m, idx) => {
@@ -337,6 +330,41 @@ export const PlayerDetail = () => {
     const matchAvg = matchRatings.length > 0
         ? (matchRatings.reduce((sum, r) => sum + Number(r.rating || 0), 0) / matchRatings.length).toFixed(1)
         : '0.0';
+
+    // ── Last match + season bests (from Champion Data) ─────────────────────────
+    const sortedRounds = [...playerRounds].sort((a, b) =>
+        new Date(b.match_date || 0).getTime() - new Date(a.match_date || 0).getTime()
+    );
+    const lastMatch = sortedRounds[0] || null;
+
+    // Helper: max across rounds for a given GPS or match_stats field
+    const bestOf = (bucket: 'gps' | 'match_stats', field: string): number | null => {
+        const vals = playerRounds
+            .map(r => (r as any)[bucket]?.[field])
+            .filter((v: any) => typeof v === 'number' && !isNaN(v));
+        return vals.length ? Math.max(...vals) : null;
+    };
+    const seasonBests = {
+        distance_km:    (bestOf('gps', 'total_distance_m')  ?? 0) / 1000,
+        max_vel:         bestOf('gps', 'max_vel'),
+        player_load:     bestOf('gps', 'total_player_load'),
+        sprints:         bestOf('gps', 'total_sprints'),
+        hs_dist:         bestOf('gps', 'total_hs_dist_m'),
+        disposals:       bestOf('match_stats', 'disposals'),
+        kicks:           bestOf('match_stats', 'kicks'),
+        handballs:       bestOf('match_stats', 'handballs'),
+        marks:           bestOf('match_stats', 'marks'),
+        tackles:         bestOf('match_stats', 'tackles'),
+        clearances:      bestOf('match_stats', 'clearances'),
+        pressure_acts:   bestOf('match_stats', 'pressure_acts'),
+        inside_50s:      bestOf('match_stats', 'inside_50s'),
+        rebound_50s:     bestOf('match_stats', 'rebound_50s'),
+        metres_gained:   bestOf('match_stats', 'metres_gained'),
+        goals:           bestOf('match_stats', 'goals'),
+    };
+
+    const fmt = (v: number | null | undefined, d = 0) =>
+        v == null || isNaN(v as any) ? '—' : Number(v).toFixed(d);
 
     const TABS = [
         { key: 'personal', label: 'Personal Info', icon: User },
@@ -353,9 +381,9 @@ export const PlayerDetail = () => {
     return (
         <div className="space-y-8 animate-in fade-in duration-500 relative">
             {showTeamModal && player && (
-                <AddPlayerToTeamModal 
-                    player={player} 
-                    onClose={() => setShowTeamModal(false)} 
+                <AddPlayerToTeamModal
+                    player={player}
+                    onClose={() => setShowTeamModal(false)}
                     onSuccess={() => {
                         // Optionally refresh data
                     }}
@@ -363,13 +391,13 @@ export const PlayerDetail = () => {
             )}
             {/* Navigation */}
             <div className="flex items-center justify-between">
-                <Link to="/players" className="flex items-center gap-2 text-white/80 hover:text-white transition-colors font-medium">
+                <Link to="/players" className="flex items-center gap-2 text-gray-400 hover:text-hawks-gold transition-colors font-medium">
                     <ChevronLeft size={20} />
                     Back to Squad
                 </Link>
                 <div className="flex gap-2">
-                    <button className="p-2 hover:bg-white/10 rounded-xl text-white/40 hover:text-gold-400 transition-colors"><Share2 size={18} /></button>
-                    <button className="p-2 hover:bg-white/10 rounded-xl text-white/40 hover:text-gold-400 transition-colors"><Printer size={18} /></button>
+                    <button className="p-2 hover:bg-hawks-hover rounded-xl text-gray-500 hover:text-amber-400 transition-colors"><Share2 size={18} /></button>
+                    <button className="p-2 hover:bg-hawks-hover rounded-xl text-gray-500 hover:text-amber-400 transition-colors"><Printer size={18} /></button>
                 </div>
             </div>
 
@@ -378,19 +406,19 @@ export const PlayerDetail = () => {
 
 
             {/* Tab Navigation */}
-            <div className="flex gap-2 p-1.5 bg-white/5 backdrop-blur-md border border-white/5 rounded-[2rem] w-fit">
+            <div className="flex gap-1 p-1 bg-hawks-base rounded-2xl w-fit">
                 {TABS.map(({ key, label, icon: Icon }) => (
                     <button
                         key={key}
                         onClick={() => setActiveTab(key)}
                         className={clsx(
-                            "flex items-center gap-2 px-8 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 font-work",
+                            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all duration-300",
                             activeTab === key
-                                ? "bg-gold-500 text-[#0F0A07] shadow-[0_10px_20px_rgba(246,176,0,0.3)]"
-                                : "text-white/40 hover:text-white hover:bg-white/5"
+                                ? "bg-hfc-brown text-white shadow-lg"
+                                : "text-gray-500 hover:text-gray-300 hover:bg-hawks-hover"
                         )}
                     >
-                        <Icon size={14} className={activeTab === key ? "text-[#0F0A07]" : "text-white/20"} />
+                        <Icon size={15} />
                         {label}
                     </button>
                 ))}
@@ -432,24 +460,24 @@ export const PlayerDetail = () => {
                         {/* Body & Physical */}
                         <Card title="Physical Profile" icon={Dumbbell}>
                             <div className="mb-4">
-                                <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Body Load Tier</p>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Body Load Tier</p>
                                 <TierBadge tier={engagement?.body_load_tier} />
                             </div>
                             <InfoRow icon={Target} label="Body Goal" value={engagement?.body_goal} />
                             <div className="pt-3 border-t border-white/5 mt-2">
-                                <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-1">Physical Stats</p>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1" style={{ fontFamily: 'Work Sans, sans-serif' }}>Physical Stats</p>
                                 <div className="grid grid-cols-3 gap-3 mt-2">
-                                    <div className="text-center bg-[#1A1411] rounded-xl p-3">
-                                        <div className="text-lg font-bold text-white">{player.age}</div>
-                                        <div className="text-[10px] text-white/40 uppercase tracking-widest">Age</div>
+                                    <div className="text-center bg-hawks-base rounded-xl p-3">
+                                        <div className="text-lg font-bold text-hawks-gold">{player.age}</div>
+                                        <div className="text-[10px] text-gray-500 uppercase tracking-widest">Age</div>
                                     </div>
-                                    <div className="text-center bg-[#1A1411] rounded-xl p-3">
-                                        <div className="text-lg font-bold text-white">{player.height_cm}</div>
-                                        <div className="text-[10px] text-white/40 uppercase tracking-widest">Height</div>
+                                    <div className="text-center bg-hawks-base rounded-xl p-3">
+                                        <div className="text-lg font-bold text-hawks-gold">{player.height_cm}</div>
+                                        <div className="text-[10px] text-gray-500 uppercase tracking-widest">Height</div>
                                     </div>
-                                    <div className="text-center bg-[#1A1411] rounded-xl p-3">
-                                        <div className="text-lg font-bold text-white">{player.weight_kg}</div>
-                                        <div className="text-[10px] text-white/40 uppercase tracking-widest">Weight</div>
+                                    <div className="text-center bg-hawks-base rounded-xl p-3">
+                                        <div className="text-lg font-bold text-hawks-gold">{player.weight_kg}</div>
+                                        <div className="text-[10px] text-gray-500 uppercase tracking-widest">Weight</div>
                                     </div>
                                 </div>
                             </div>
@@ -458,22 +486,22 @@ export const PlayerDetail = () => {
                         {/* Community & Engagement */}
                         <Card title="Community & Engagement" icon={Heart}>
                             <div className="mb-4 flex items-center gap-3">
-                                <div className={`w-3 h-3 rounded-full ${engagement?.community_engaged ? 'bg-green-400' : 'bg-white/20'}`} />
-                                <span className={`text-sm font-bold ${engagement?.community_engaged ? 'text-emerald-400' : 'text-white/40'}`}>
+                                <div className={`w-3 h-3 rounded-full ${engagement?.community_engaged ? 'bg-green-400' : 'bg-gray-600'}`} />
+                                <span className={`text-sm font-bold ${engagement?.community_engaged ? 'text-green-400' : 'text-gray-500'}`}>
                                     {engagement?.community_engaged ? 'Community Active' : 'Not Currently Active'}
                                 </span>
                             </div>
                             {engagement?.engagement_notes && (
-                                <div className="p-4 bg-gold-400/5 rounded-xl border border-gold-400/10">
-                                    <p className="text-xs font-bold text-gold-400 uppercase tracking-widest mb-1">Engagement Notes</p>
-                                    <p className="text-sm text-white/80 leading-relaxed">{engagement.engagement_notes}</p>
+                                <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+                                    <p className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1" style={{ fontFamily: 'Work Sans, sans-serif' }}>Engagement Notes</p>
+                                    <p className="text-sm text-gray-300 leading-relaxed">{engagement.engagement_notes}</p>
                                 </div>
                             )}
                         </Card>
 
                         {/* Latest Wellbeing */}
                         {latestWellbeing && (
-                            <Card title="Pulse Wellbeing" icon={Activity}>
+                            <Card title="Latest Wellbeing Check-In" icon={Activity}>
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     {[
                                         { label: 'Sleep', value: latestWellbeing.sleep_score },
@@ -481,23 +509,18 @@ export const PlayerDetail = () => {
                                         { label: 'Mood', value: 10 - Number(latestWellbeing.stress_score || 0) },
                                         { label: 'Readiness', value: ((Number(latestWellbeing.sleep_score || 0) + Number(latestWellbeing.soreness_score || 0) + (10 - Number(latestWellbeing.stress_score || 0))) / 3).toFixed(1), gold: true },
                                     ].map(({ label, value, gold }: any) => (
-                                        <div key={label} className="text-center bg-white/5 rounded-2xl p-4 border border-white/5 hover:border-gold-400/20 transition-all duration-300">
-                                            <div className={`text-2xl font-black font-space ${gold ? 'text-gold-400' : 'text-white'}`}>{value}</div>
-                                            <div className="stat-label !text-[7px] opacity-40 mt-1 uppercase tracking-widest">{label}</div>
+                                        <div key={label} className="text-center bg-hawks-base rounded-xl p-3">
+                                            <div className={`text-xl font-bold ${gold ? 'text-hawks-gold' : 'text-gray-100'}`}>{value}/10</div>
+                                            <div className="text-[10px] text-gray-500 uppercase tracking-widest">{label}</div>
                                         </div>
                                     ))}
                                 </div>
                                 {latestWellbeing.notes && (
-                                    <div className="p-4 bg-gold-400/5 rounded-2xl border border-gold-400/10 italic text-white/60 text-xs font-work leading-relaxed">
-                                        "{latestWellbeing.notes}"
-                                    </div>
+                                    <p className="text-sm italic text-gray-400 mt-2">"{latestWellbeing.notes}"</p>
                                 )}
-                                <div className="mt-4 flex items-center gap-2 px-3">
-                                    <div className="h-1 w-1 rounded-full bg-gold-400/40"></div>
-                                    <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em]">
-                                        Last Sync: {new Date(latestWellbeing.submitted_at).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}
-                                    </p>
-                                </div>
+                                <p className="text-[10px] text-gray-500 mt-3">
+                                    {new Date(latestWellbeing.submitted_at).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                </p>
                             </Card>
                         )}
                     </div>
@@ -508,41 +531,149 @@ export const PlayerDetail = () => {
             {activeTab === 'footy' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
 
+                    {/* Last Match — GPS + match stats */}
+                    <div className="bg-hawks-card p-8 rounded-3xl border border-white/5">
+                        <div className="flex items-center justify-between border-b-2 border-hawks-gold pb-2 mb-6">
+                            <h3 className="font-bold text-xl text-gray-100 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                                <Activity size={20} className="text-hawks-gold" />
+                                Most Recent Match
+                            </h3>
+                            {lastMatch && (
+                                <div className="text-right">
+                                    <div className="text-sm font-black text-gray-100">{lastMatch.round_name} — {lastMatch.match_name}</div>
+                                    <div className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">
+                                        {lastMatch.match_date ? new Date(lastMatch.match_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : ''} · {lastMatch.venue_name}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {!lastMatch ? (
+                            <p className="text-gray-500 italic text-sm">No match history recorded for this player.</p>
+                        ) : (
+                            <div className="space-y-6">
+                                {/* GPS Metrics */}
+                                <div>
+                                    <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest mb-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>GPS Metrics</p>
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-3">
+                                        {[
+                                            { label: 'Distance (km)', value: lastMatch.gps?.total_distance_m != null ? (lastMatch.gps.total_distance_m / 1000).toFixed(1) : '—' },
+                                            { label: 'HS Dist (m)', value: fmt(lastMatch.gps?.total_hs_dist_m) },
+                                            { label: 'Sprints', value: fmt(lastMatch.gps?.total_sprints) },
+                                            { label: 'Player Load', value: fmt(lastMatch.gps?.total_player_load) },
+                                            { label: 'Max Vel', value: fmt(lastMatch.gps?.max_vel, 1) },
+                                            { label: 'm/min', value: fmt(lastMatch.gps?.avg_m_per_min) },
+                                            { label: 'HR Avg', value: fmt(lastMatch.gps?.hr_avg) },
+                                            { label: 'HR Max', value: fmt(lastMatch.gps?.hr_max) },
+                                            { label: 'Accels', value: fmt(lastMatch.gps?.total_accels) },
+                                            { label: 'Decels', value: fmt(lastMatch.gps?.total_decels) },
+                                            { label: 'HMLD', value: fmt(lastMatch.gps?.total_hmld) },
+                                            { label: 'Field Min', value: lastMatch.gps?.total_field_min != null ? Math.round(lastMatch.gps.total_field_min / 60).toString() : '—' },
+                                        ].map(({ label, value }) => (
+                                            <div key={label} className="text-center bg-hawks-base rounded-xl p-3">
+                                                <div className="text-lg font-bold text-hawks-gold">{value}</div>
+                                                <div className="text-[10px] text-gray-500 uppercase tracking-widest">{label}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Match Stats */}
+                                <div>
+                                    <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest mb-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Match Stats</p>
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-8 gap-3">
+                                        {[
+                                            { label: 'Disposals', value: fmt(lastMatch.match_stats?.disposals) },
+                                            { label: 'Kicks', value: fmt(lastMatch.match_stats?.kicks) },
+                                            { label: 'Handballs', value: fmt(lastMatch.match_stats?.handballs) },
+                                            { label: 'Marks', value: fmt(lastMatch.match_stats?.marks) },
+                                            { label: 'Tackles', value: fmt(lastMatch.match_stats?.tackles) },
+                                            { label: 'Clearances', value: fmt(lastMatch.match_stats?.clearances) },
+                                            { label: 'Free Kicks', value: fmt(lastMatch.match_stats?.free_kicks) },
+                                            { label: 'Pressure', value: fmt(lastMatch.match_stats?.pressure_acts) },
+                                            { label: 'Inside 50s', value: fmt(lastMatch.match_stats?.inside_50s) },
+                                            { label: 'Rebound 50s', value: fmt(lastMatch.match_stats?.rebound_50s) },
+                                            { label: 'M Gained', value: fmt(lastMatch.match_stats?.metres_gained) },
+                                            { label: 'Turnovers', value: fmt(lastMatch.match_stats?.turnovers) },
+                                            { label: 'Goals', value: fmt(lastMatch.match_stats?.goals) },
+                                            { label: 'Behinds', value: fmt(lastMatch.match_stats?.behinds) },
+                                            { label: 'TOG (s)', value: fmt(lastMatch.match_stats?.time_on_ground) },
+                                        ].map(({ label, value }) => (
+                                            <div key={label} className="text-center bg-hawks-base rounded-xl p-3">
+                                                <div className="text-lg font-bold text-gray-100">{value}</div>
+                                                <div className="text-[10px] text-gray-500 uppercase tracking-widest">{label}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Season Best / Top Scores */}
+                    <div className="bg-hawks-card p-8 rounded-3xl border border-white/5">
+                        <h3 className="font-bold text-xl text-gray-100 border-b-2 border-hawks-gold pb-2 mb-6 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                            <Award size={20} className="text-hawks-gold" />
+                            Season Best / Top Scores
+                            <span className="text-xs font-medium text-gray-500 ml-2">across {playerRounds.length} matches</span>
+                        </h3>
+                        {playerRounds.length === 0 ? (
+                            <p className="text-gray-500 italic text-sm">No season match history yet.</p>
+                        ) : (
+                            <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-8 gap-3">
+                                {[
+                                    { label: 'Distance (km)', value: seasonBests.distance_km.toFixed(1) },
+                                    { label: 'HS Dist (m)', value: fmt(seasonBests.hs_dist) },
+                                    { label: 'Sprints', value: fmt(seasonBests.sprints) },
+                                    { label: 'Player Load', value: fmt(seasonBests.player_load) },
+                                    { label: 'Max Vel', value: fmt(seasonBests.max_vel, 1) },
+                                    { label: 'Disposals', value: fmt(seasonBests.disposals) },
+                                    { label: 'Kicks', value: fmt(seasonBests.kicks) },
+                                    { label: 'Handballs', value: fmt(seasonBests.handballs) },
+                                    { label: 'Marks', value: fmt(seasonBests.marks) },
+                                    { label: 'Tackles', value: fmt(seasonBests.tackles) },
+                                    { label: 'Clearances', value: fmt(seasonBests.clearances) },
+                                    { label: 'Pressure', value: fmt(seasonBests.pressure_acts) },
+                                    { label: 'Inside 50s', value: fmt(seasonBests.inside_50s) },
+                                    { label: 'Rebound 50s', value: fmt(seasonBests.rebound_50s) },
+                                    { label: 'M Gained', value: fmt(seasonBests.metres_gained) },
+                                    { label: 'Goals', value: fmt(seasonBests.goals) },
+                                ].map(({ label, value }) => (
+                                    <div key={label} className="text-center bg-gradient-to-b from-hawks-base to-hawks-hover/40 rounded-xl p-3 border border-hawks-gold/20">
+                                        <div className="text-lg font-black text-hawks-gold">{value}</div>
+                                        <div className="text-[10px] text-gray-500 uppercase tracking-widest">{label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
 
 
                         {/* Match Ratings */}
-                        <div className="premium-card p-10">
-                            <div className="flex items-center justify-between mb-10">
-                                <div className="space-y-1">
-                                    <div className="stat-label !text-[8px] text-gold-400/60 uppercase tracking-[0.3em]">Season Trajectory</div>
-                                    <h3 className="font-black text-2xl text-white uppercase font-space tracking-tight">Match Performance</h3>
-                                </div>
+                        <div className="bg-hawks-card p-8 rounded-3xl border border-white/5">
+                            <div className="flex items-center justify-between border-b-2 border-hawks-gold pb-2 mb-8">
+                                <h3 className="font-bold text-xl text-gray-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>2026 Match Ratings</h3>
                                 <div className="text-right">
-                                    <div className="text-3xl font-black text-gold-400 font-space tracking-tighter">{matchAvg}</div>
-                                    <div className="stat-label !text-[7px] opacity-40 uppercase tracking-widest last:!mr-0">Season Avg ({matchRatings.length} Games)</div>
+                                    <span className="text-hawks-gold font-bold text-lg">Avg: {matchAvg} / 5</span>
+                                    <span className="text-gray-500 text-xs ml-2">({matchRatings.length} matches)</span>
                                 </div>
                             </div>
-                            <div ref={chartRef} className="h-80 w-full relative">
-                                <div className="absolute inset-0 bg-gold-400/[0.02] rounded-3xl pointer-events-none"></div>
+                            <div ref={chartRef} className="h-80 w-full">
                                 <NativeMatchRatingsChart data={chartMatchData} size={chartSize} />
                             </div>
                         </div>
 
                         {/* Season Stats */}
                         {stats2025 && (
-                            <div className="premium-card p-10">
-                                <div className="flex items-center gap-3 mb-10 border-b border-white/5 pb-6">
-                                    <div className="p-2.5 bg-white/5 rounded-2xl text-gold-400 shadow-lg">
-                                        <Trophy size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="stat-label !text-[8px] text-gold-400/60 uppercase tracking-[0.3em]">Historical Data</div>
-                                        <h3 className="font-black text-xl text-white uppercase font-space tracking-tight">2025 Season Averages</h3>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
+                            <div className="bg-hawks-card p-8 rounded-3xl border border-white/5">
+                                <h3 className="font-bold text-xl text-gray-100 border-b-2 border-hawks-gold pb-2 mb-6 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                                    <Trophy size={20} className="text-hawks-gold" />
+                                    2025 Season Averages
+                                </h3>
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
                                     {[
                                         { label: 'Games', value: stats2025.games_played },
                                         { label: 'AF Score', value: stats2025.af_avg },
@@ -556,11 +687,11 @@ export const PlayerDetail = () => {
                                         { label: 'Hitouts', value: stats2025.hitouts_avg },
                                         { label: 'Rating Pts', value: stats2025.rating_points },
                                     ].map(({ label, value }) => (
-                                        <div key={label} className="text-center bg-white/5 rounded-2xl p-4 border border-white/5 hover:border-gold-400/20 transition-all duration-300 group">
-                                            <div className="text-xl font-black text-white font-space group-hover:text-gold-400 transition-colors">
+                                        <div key={label} className="text-center bg-hawks-base rounded-xl p-3">
+                                            <div className="text-xl font-bold text-hawks-gold">
                                                 {typeof value !== 'undefined' && value !== null ? Number(value).toFixed(Number(value) % 1 === 0 ? 0 : 1) : '—'}
                                             </div>
-                                            <div className="stat-label !text-[7px] opacity-40 uppercase tracking-widest mt-1">{label}</div>
+                                            <div className="text-[10px] text-gray-500 uppercase tracking-widest">{label}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -568,51 +699,47 @@ export const PlayerDetail = () => {
                         )}
 
                         {/* Injury History */}
-                        <div className="premium-card p-10">
-                            <h3 className="font-black text-xl text-white mb-8 flex items-center gap-3 font-space uppercase tracking-tight">
-                                <div className="p-2.5 bg-rose-500/10 rounded-2xl text-rose-500 shadow-lg shadow-rose-900/20">
-                                    <Activity size={24} />
-                                </div>
-                                Medical History Log
+                        <div className="bg-hawks-card p-8 rounded-3xl border border-white/5">
+                            <h3 className="font-bold text-xl text-gray-100 mb-6 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                                <Activity className="text-red-400" size={24} />
+                                Injury History
                             </h3>
-                            <div className="overflow-hidden rounded-[2rem] border border-white/5">
-                                <table className="w-full text-sm text-left border-collapse">
-                                    <thead className="bg-white/5 text-white/30 font-bold font-work uppercase tracking-[0.2em] text-[9px]">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="text-gray-500 font-medium border-b border-white/10">
                                         <tr>
-                                            <th className="py-5 px-6">Entry Date</th>
-                                            <th className="py-5 px-6">Condition</th>
-                                            <th className="py-5 px-6">Severity</th>
-                                            <th className="py-5 px-6 text-right">Clearance</th>
+                                            <th className="pb-3 px-4">Date</th>
+                                            <th className="pb-3 px-4">Injury</th>
+                                            <th className="pb-3 px-4">Severity</th>
+                                            <th className="pb-3 px-4 text-right">Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-white/[0.03]">
+                                    <tbody className="divide-y divide-white/5">
                                         {playerInjuries.map((inj, idx) => (
-                                            <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
-                                                <td className="py-5 px-6 text-white/40 font-work text-[11px]">{inj.date}</td>
-                                                <td className="py-5 px-6 font-black text-white uppercase tracking-tight text-sm font-space group-hover:text-rose-400 transition-colors">{inj.injury_type}</td>
-                                                <td className="py-5 px-6">
+                                            <tr key={idx} className="hover:bg-hawks-hover transition-colors">
+                                                <td className="py-4 px-4 text-gray-400">{inj.date}</td>
+                                                <td className="py-4 px-4 font-bold text-gray-100">{inj.injury_type}</td>
+                                                <td className="py-4 px-4">
                                                     <span className={clsx(
-                                                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
-                                                        inj.severity === 'Major' ? 'bg-rose-500/20 text-rose-300 border-rose-500/20' :
-                                                            inj.severity === 'Moderate' ? 'bg-gold-500/20 text-gold-300 border-gold-500/20' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20'
+                                                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                                                        inj.severity === 'Major' ? 'bg-red-500/10 text-red-400' :
+                                                            inj.severity === 'Moderate' ? 'bg-amber-500/10 text-amber-400' : 'bg-green-500/10 text-green-400'
                                                     )}>
                                                         {inj.severity}
                                                     </span>
                                                 </td>
-                                                <td className="py-5 px-6 text-right">
-                                                    <div className="flex items-center justify-end gap-3">
-                                                        <div className={clsx("w-1.5 h-1.5 rounded-full shadow-lg",
-                                                            inj.status === 'Active' ? 'bg-rose-500 shadow-rose-500/50' : 
-                                                            inj.status === 'Recovering' ? 'bg-gold-500 shadow-gold-500/50' : 
-                                                            'bg-emerald-500 shadow-emerald-500/50'
+                                                <td className="py-4 px-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <div className={clsx("w-2 h-2 rounded-full",
+                                                            inj.status === 'Active' ? 'bg-red-500' : inj.status === 'Recovering' ? 'bg-amber-500' : 'bg-green-500'
                                                         )} />
-                                                        <span className="text-white/60 font-black uppercase tracking-widest text-[9px] font-work">{inj.status}</span>
+                                                        <span className="text-gray-300">{inj.status}</span>
                                                     </div>
                                                 </td>
                                             </tr>
                                         ))}
                                         {playerInjuries.length === 0 && (
-                                            <tr><td colSpan={4} className="py-16 text-center text-white/20 font-work uppercase tracking-widest text-[10px] italic">Fully fit — No medical history recorded.</td></tr>
+                                            <tr><td colSpan={4} className="py-10 text-center text-gray-500 italic">No injury history recorded.</td></tr>
                                         )}
                                     </tbody>
                                 </table>
@@ -621,48 +748,31 @@ export const PlayerDetail = () => {
                     </div>
 
                     {/* WOOP Goals */}
-                    <div className="premium-card p-10">
-                        <h3 className="font-black text-xl text-white mb-10 flex items-center gap-4 font-space uppercase tracking-tight">
-                            <div className="p-2.5 bg-white/5 rounded-2xl text-gold-400 shadow-lg">
-                                <Target size={24} />
-                            </div>
-                            WOOP Framework — Vision & Strategy
+                    <div className="bg-hawks-card p-8 rounded-3xl border border-white/5">
+                        <h3 className="font-bold text-xl text-gray-100 mb-6 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                            <Target className="text-hawks-gold" size={24} />
+                            WOOP Goals — Wish, Outcome, Obstacle, Plan
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {woopGoals.length > 0 ? woopGoals.map((goal, idx) => (
-                                <div key={idx} className="p-8 rounded-[2.5rem] bg-gold-400/5 border border-gold-400/10 space-y-6 group hover:bg-gold-400/10 transition-all duration-500 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-gold-400/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <h4 className="font-black text-white text-2xl uppercase tracking-tight font-space group-hover:text-gold-400 transition-colors leading-none">{goal.wish}</h4>
+                                <div key={idx} className="p-6 rounded-2xl bg-hawks-base border border-white/5 space-y-4">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className="font-bold text-hawks-gold text-lg">{goal.wish}</h4>
                                         <span className={clsx(
-                                            "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border shadow-lg",
-                                            goal.status === 'active' ? "bg-gold-500 text-[#0F0A07] border-transparent" : "bg-emerald-500 text-white border-transparent"
+                                            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                                            goal.status === 'active' ? "bg-hfc-brown text-white" : "bg-green-500 text-white"
                                         )}>
                                             {goal.status}
                                         </span>
                                     </div>
-                                    <div className="grid gap-6 text-[11px] font-work relative z-10">
-                                        <div>
-                                            <span className="stat-label !text-[8px] text-gold-400/60 block mb-2 opacity-100 uppercase tracking-[0.3em]">The Outcome</span>
-                                            <p className="text-white/80 font-medium leading-relaxed italic">"{goal.outcome}"</p>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <div>
-                                                <span className="stat-label !text-[8px] text-rose-400/60 block mb-2 opacity-100 uppercase tracking-[0.3em]">The Obstacle</span>
-                                                <p className="text-white/60 font-medium leading-relaxed">{goal.obstacle}</p>
-                                            </div>
-                                            <div>
-                                                <span className="stat-label !text-[8px] text-emerald-400/60 block mb-2 opacity-100 uppercase tracking-[0.3em]">The Plan</span>
-                                                <p className="text-white/60 font-medium leading-relaxed">{goal.plan}</p>
-                                            </div>
-                                        </div>
+                                    <div className="grid gap-3 text-sm">
+                                        <div><span className="font-black text-hawks-gold uppercase text-[10px] block mb-1" style={{ fontFamily: 'Work Sans, sans-serif' }}>Outcome</span><p className="text-gray-300 font-medium">{goal.outcome}</p></div>
+                                        <div><span className="font-black text-hawks-gold uppercase text-[10px] block mb-1" style={{ fontFamily: 'Work Sans, sans-serif' }}>Obstacle</span><p className="text-gray-300 font-medium">{goal.obstacle}</p></div>
+                                        <div><span className="font-black text-hawks-gold uppercase text-[10px] block mb-1" style={{ fontFamily: 'Work Sans, sans-serif' }}>Plan</span><p className="text-gray-300 font-medium">{goal.plan}</p></div>
                                     </div>
                                 </div>
                             )) : (
-                                <div className="col-span-full p-16 text-center border border-dashed border-white/10 rounded-[3rem]">
-                                    <Target size={40} className="mx-auto mb-4 text-white/5" />
-                                    <p className="text-white/20 font-work uppercase tracking-widest text-xs italic">Awaiting strategic goal input...</p>
-                                </div>
+                                <p className="text-gray-500 italic">No active WOOP goals for this period.</p>
                             )}
                         </div>
                     </div>
@@ -671,34 +781,27 @@ export const PlayerDetail = () => {
 
             {/* ── Tab: Fitness Performance ──────────────────────────────────────────── */}
             {activeTab === 'fitness' && (
-                <div className="premium-card p-10 animate-in fade-in slide-in-from-bottom-4 duration-700 border-none shadow-gold-glow-none">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-white/5 pb-8">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-white/5 rounded-2xl text-gold-400 shadow-xl">
-                                <Activity size={28} />
-                            </div>
-                            <div>
-                                <div className="stat-label !text-[8px] text-gold-400/60 uppercase tracking-[0.3em]">GPS Telemetry</div>
-                                <h3 className="font-black text-2xl text-white uppercase font-space tracking-tight">Fitness & Kinectic Performance</h3>
-                            </div>
-                        </div>
+                <div className="bg-hawks-card p-8 rounded-3xl border border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <h3 className="font-bold text-xl text-gray-100 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                            <Activity className="text-hawks-gold" size={24} />
+                            Fitness & GPS Performance
+                        </h3>
                         {fitnessSession && (
-                            <div className="flex items-center gap-3">
-                                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] px-5 py-2 bg-white/5 rounded-full border border-white/5">
-                                    Last Sync: {new Date(fitnessSession.session_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest px-3 py-1 bg-hawks-base rounded-lg">
+                                    Last Session: {new Date(fitnessSession.session_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
                                 </span>
                             </div>
                         )}
 
                     </div>
-                    <div className="rounded-[2.5rem] overflow-hidden">
-                        <FitnessTab
-                            session={fitnessSession}
-                            pbs={fitnessPBs}
-                            playerName={player.name}
-                            isInjured={player.status !== 'Green'}
-                        />
-                    </div>
+                    <FitnessTab
+                        session={fitnessSession}
+                        pbs={fitnessPBs}
+                        playerName={player.name}
+                        isInjured={player.status !== 'Green'}
+                    />
                 </div>
             )}
         </div>

@@ -19,6 +19,8 @@ import EventTimeline from './pages/EventTimeline';
 import PlayerComparison from './pages/MatchCenter/PlayerComparison';
 import AdminSettings from './pages/AdminSettings';
 import { PlayerReview } from './pages/PlayerReview';
+import Analytics from './pages/Analytics';
+import MatchDebrief from './pages/MatchDebrief';
 
 
 
@@ -84,6 +86,8 @@ function AppRoutes() {
         <Route path="ratings/compare" element={<CoachOnly><RatingComparison /></CoachOnly>} />
         <Route path="team-builder" element={<CoachOnly><TeamBuilder /></CoachOnly>} />
         
+        <Route path="analytics" element={<CoachOnly><Analytics /></CoachOnly>} />
+        <Route path="analytics/debrief" element={<CoachOnly><MatchDebrief /></CoachOnly>} />
         <Route path="match-center/previews" element={<CoachOnly><OppositionPreviews /></CoachOnly>} />
         <Route path="match-center/timeline" element={<CoachOnly><EventTimeline /></CoachOnly>} />
         <Route path="match-center/comparison" element={<CoachOnly><PlayerComparison /></CoachOnly>} />
@@ -99,7 +103,7 @@ function AppRoutes() {
         {/* Player-only routes */}
         <Route path="checkin" element={<PlayerOnly><DailyCheckIn /></PlayerOnly>} />
         <Route path="woop" element={<PlayerOnly><WoopGoals /></PlayerOnly>} />
-        <Route path="ratings/player-review" element={<PlayerOnly><PlayerReview /></PlayerOnly>} />
+        <Route path="ratings/player-review" element={<PlayerReview />} />
 
 
         <Route path="idp" element={<div className="p-10">IDP Module Coming Soon</div>} />

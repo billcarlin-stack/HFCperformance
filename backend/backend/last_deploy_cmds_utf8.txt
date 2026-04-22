@@ -1,0 +1,35 @@
+﻿gcloud run deploy the-nest-api ``
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated --network=default --subnet=default --vpc-egress=all-traffic --set-env-vars 'FLASK_ENV=production,GOOGLE_CLOUD_PROJECT=bill-sandpit,BQ_DATASET=hfc_performance_hub,DATABASE_URL=postgresql://postgres:\.SrzoMfRnM0\-Mp@10.31.0.2:5432/hfc_prod'`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated --network=default --subnet=default --vpc-egress=all-traffic --set-env-vars 'FLASK_ENV=production,GOOGLE_CLOUD_PROJECT=bill-sandpit,BQ_DATASET=hfc_performance_hub,DATABASE_URL=postgresql://postgres:\.SrzoMfRnM0\-Mp@10.31.0.2:5432/hfc_prod'`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated`
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated
+git add . ; git commit -m "fix: use urlsafe_b64decode for manual JWT fallback and add debug logging" ; git push origin main ; git push hfc main:main ; gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated
+git add . ; git commit -m "feat: complete admin portal and developer impersonation features" ; git push origin main ; git push hfc main:main ; gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated
+git add . ; git commit -m "fix: impersonation player list and persistent admin tools" ; git push origin main ; git push hfc main:main ; gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated
+git add . ; git commit -m "feat: add player photo sync from bigquery" ; git push origin main ; git push hfc main:main ; gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated
+git add . ; git commit -m "fix: resolve data_cache.clear() attribute error and deploy with 1GiB memory" ; git push origin main ; git push hfc main:main ; gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated --memory 1GiB
+gcloud run deploy the-nest-api --source . --region australia-southeast1 --allow-unauthenticated --memory 1Gi
+gcloud run deploy the-nest-api ``
+gcloud run deploy the-nest-api ``
+gcloud run deploy the-nest-api ``
+gcloud run deploy the-nest-api ``
+gcloud run deploy the-nest-api ``
+gcloud run deploy the-nest-api ``
+Get-Content (Get-PSReadlineOption).HistorySavePath | Select-Object -Last 1000 | Where-Object { $_ -like "*gcloud run deploy the-nest-api*" } | Out-File -FilePath last_deploy_cmds.txt

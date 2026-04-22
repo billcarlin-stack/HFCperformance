@@ -1,0 +1,217 @@
+[
+  {
+    "name": "Harry\nMORRISON\nMIDFIELDER",
+    "jumper": 1,
+    "photo": "https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/2026014/1000963.png?im=Scale,width=0.504,height=0.504"
+  },
+  {
+    "name": "Mitch\nLEWIS\nKEY FORWARD",
+    "jumper": 2,
+    "photo": "https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/2026014/1000887.png?im=Scale,width=0.504,height=0.504"
+  },
+  {
+    "name": "Jai\nNEWCOMBE\nMIDFIELDER",
+    "jumper": 3,
+    "photo": "https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/2026014/1020895.png?im=Scale,width=0.504,height=0.504"
+  },
+  {
+    "name": "Jarman\nIMPEY\nDEFENDER",
+    "jumper": 4,
+    "photo": "https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/2026014/296254.png?im=Scale,width=0.504,height=0.504"
+  },
+  {
+    "name": "Nick\nWATSON\nFORWARD",
+    "jumper": 5,
+    "photo": "https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/2026014/1023473.png?im=Scale,width=0.504,height=0.504"
+  },
+  {
+    "name": "James\nSICILY\nDEFENDER",
+    "jumper": 6,
+    "photo": "https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/2026014/297566.png?im=Scale,width=0.504,height=0.504"
+  },
+  {
+    "name": "Ned\nREEVES\nRUCK",
+    "jumper": 7,
+    "photo": "https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/2026014/1001024.png?im=Scale,width=0.504,height=0.504"
+  },
+  {
+    "name": "Dylan\nMOORE\nFORWARD",
+    "jumper": 8,
+    "photo": "https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/2026014/1006314.png?im=Scale,width=0.504,height=0.504"
+  },
+  {
+    "name": "Connor\nMACDONALD\nFORWARD",
+    "jumper": 9,
+    "photo": "https://s.afl.com.au/staticfile/AFL%20Tenant/AFL/Players/ChampIDImages/AFL/2026014/1017094.png?im=Scale,width=0.504,height=0.504"
+  },
+  {
+    "name": "Karl\nAMON\nDEFENDER",
+    "jumper": 10,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Conor\nNASH\nMIDFIELDER",
+    "jumper": 11,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Will\nDAY\nMIDFIELDER",
+    "jumper": 12,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Calsher\nDEAR\nKEY FORWARD",
+    "jumper": 13,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Jack\nSCRIMSHAW\nDEFENDER",
+    "jumper": 14,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Blake\nHARDWICK\nDEFENDER",
+    "jumper": 15,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Massimo\nD'AMBROSIO\nMIDFIELDER",
+    "jumper": 16,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Lloyd\nMEEK\nRUCK",
+    "jumper": 17,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Mabior\nCHOL\nKEY FORWARD",
+    "jumper": 18,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Jack\nGUNSTON\nKEY FORWARD",
+    "jumper": 19,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Finn\nMAGINNESS\nFORWARD",
+    "jumper": 20,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Noah\nMRAZ\nKEY DEFENDER",
+    "jumper": 21,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Cameron\nNAIRN\nMIDFIELDER",
+    "jumper": 22,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Josh\nWEDDLE\nDEFENDER",
+    "jumper": 23,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Josh\nBATTLE\nKEY DEFENDER",
+    "jumper": 24,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Josh\nWARD\nMIDFIELDER",
+    "jumper": 25,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Bodie\nRYAN\nDEFENDER",
+    "jumper": 26,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "William\nMCCABE\nKEY FORWARD",
+    "jumper": 27,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Cam\nMACKENZIE\nMIDFIELDER",
+    "jumper": 28,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Aidan\nSCHUBERT\nKEY FORWARD",
+    "jumper": 29,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Sam\nBUTLER\nMIDFIELDER",
+    "jumper": 30,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Matthew\nLERAY\nMIDFIELDER",
+    "jumper": 31,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Cody\nANDERSON\nMIDFIELDER",
+    "jumper": 32,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Jack\nGINNIVAN\nFORWARD",
+    "jumper": 33,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Jack\nDALTON\nMIDFIELDER",
+    "jumper": 34,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Oliver\nGREEVES\nMIDFIELDER",
+    "jumper": 35,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "James\nBLANCK\nKEY DEFENDER",
+    "jumper": 36,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Tom\nBARRASS\nKEY DEFENDER",
+    "jumper": 37,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Max\nRAMSDEN\nKEY FORWARD",
+    "jumper": 38,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Flynn\nPEREZ\nDEFENDER",
+    "jumper": 39,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Matt\nHILL\nFORWARD",
+    "jumper": 41,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Bailey\nMACDONALD\nDEFENDER",
+    "jumper": 42,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Jaime\nUHR-HENRY\nRUCK",
+    "jumper": 43,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  },
+  {
+    "name": "Henry\nHUSTWAITE\nMIDFIELDER",
+    "jumper": 44,
+    "photo": "https://www.hawthornfc.com.au/resources/club-watermarks/11861/haw-left.png"
+  }
+]

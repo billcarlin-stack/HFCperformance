@@ -1,40 +1,47 @@
 /*
   The Nest — Post Match Player Review Dashboard
-  
-  Module 3: Visualizes granular coaching ratings.
-  Modes: Player (Radar), Team (Matrix), and Yearly (Progression Matrix).
+
+  Visualizes granular coaching ratings with Coach vs Self comparison.
+  Modes: Player (Radar + Gap), Team (Matrix), By Round (Progression).
 */
 
 import { useEffect, useState, useRef } from 'react';
 import { ApiService, formatPlayerImage } from '../services/api';
-import type { Player, CoachRating, AggregatedRating, TeamMatrixResponse, YearlyMatrixResponse } from '../services/api';
-import { User, Activity, LayoutGrid, Calendar } from 'lucide-react';
+import type { Player, CoachRating, TeamMatrixResponse, YearlyMatrixResponse } from '../services/api';
+import { User, Activity, LayoutGrid, BarChart2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { NativeRadarChart } from '../components/common/NativeRadarChart';
+import { useRounds } from '../hooks/useRounds';
+import { RoundSelector } from '../components/common/RoundSelector';
+import { PositionFilter, matchesPositionFilter } from '../components/common/PositionFilter';
+import type { PositionGroup } from '../components/common/PositionFilter';
 
-type ViewMode = 'PLAYER' | 'TEAM' | 'YEAR';
+type ViewMode = 'PLAYER' | 'TEAM' | 'ROUND';
 
-/** 
- * Compact Performance Cell 
- * 1-3: Red
- * 4-6: Black 
- * 7-10: Green
- */
-const HeatmapCell = ({ value }: { value: number }) => {
-    if (!value || value === 0) return <div className="w-8 h-8 flex items-center justify-center text-white/20 text-[10px] font-work">—</div>;
-    
-    // Adjusted for better contrast in dark mode
-    const bgColor = 
-        value <= 3 ? "bg-rose-500/20 text-rose-400 border border-rose-500/20" : 
-        value <= 6 ? "bg-white/5 text-white/60 border border-white/10" : 
-        "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20";
-    
+const CATEGORIES = ["Technical", "Tactical", "Physical", "Mental"];
+
+const RatingCell = ({ rating }: { rating: { coach: number; self: number } }) => {
+    const gap = (rating.coach || 0) - (rating.self || 0);
+    const hasData = rating.coach || rating.self;
+
+    if (!hasData) return <div className="text-gray-500 text-[10px]">—</div>;
+
     return (
-        <div className={clsx(
-            "w-8 h-8 flex items-center justify-center rounded-xl font-black text-[11px] shadow-sm transition-all hover:scale-110 hover:shadow-lg font-space",
-            bgColor
-        )}>
-            {value}
+        <div className="flex flex-col items-center justify-center py-1">
+            <div className="flex items-center gap-1.5 font-black text-xs">
+                <span className="text-gray-100">{rating.coach || '-'}</span>
+                <span className="text-gray-500">/</span>
+                <span className="text-gold-500">{rating.self || '-'}</span>
+            </div>
+            {rating.coach > 0 && rating.self > 0 && (
+                <div className={clsx(
+                    "text-[8px] font-black px-1 rounded",
+                    gap > 0 ? "text-emerald-400 bg-emerald-500/10" :
+                    gap < 0 ? "text-rose-400 bg-rose-500/10" : "text-gray-500 bg-hawks-hover"
+                )}>
+                    {gap > 0 ? `+${gap}` : gap}
+                </div>
+            )}
         </div>
     );
 };
@@ -44,15 +51,17 @@ export const RatingComparison = () => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [selectedPlayerId, setSelectedPlayerId] = useState<number>(0);
     const [selectedCategory, setSelectedCategory] = useState<string>("Technical");
-    
+    const [posFilter, setPosFilter] = useState<PositionGroup>('ALL');
+
+    const { seasons, selectedSeason, setSelectedSeason, rounds, selectedRound, setSelectedRound } = useRounds();
+
     // Data states
     const [ratings, setRatings] = useState<CoachRating[]>([]);
-    const [aggregatedRatings, setAggregatedRatings] = useState<AggregatedRating[]>([]);
     const [teamMatrix, setTeamMatrix] = useState<TeamMatrixResponse | null>(null);
     const [yearlyMatrix, setYearlyMatrix] = useState<YearlyMatrixResponse | null>(null);
-    
+
     const [loading, setLoading] = useState(true);
-    const [radarSize, setRadarSize] = useState({ w: 500, h: 400 });
+    const [radarSize, setRadarSize] = useState({ w: 600, h: 360 });
     const radarRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -61,36 +70,39 @@ export const RatingComparison = () => {
 
     // Fetch Player View Data
     useEffect(() => {
-        if (viewMode === 'PLAYER' && selectedPlayerId) {
-            ApiService.getRatings(selectedPlayerId.toString()).then(res => {
+        if (viewMode === 'PLAYER' && selectedPlayerId && selectedRound) {
+            ApiService.getRatings(selectedPlayerId.toString(), selectedRound.id).then(res => {
                 setRatings(res.ratings || []);
-                setAggregatedRatings(res.aggregated || []);
             });
         }
-    }, [selectedPlayerId, viewMode]);
+    }, [selectedPlayerId, viewMode, selectedRound]);
 
     // Fetch Team Matrix Data
     useEffect(() => {
-        if (viewMode === 'TEAM') {
+        if (viewMode === 'TEAM' && selectedRound) {
             setLoading(true);
-            ApiService.getTeamMatrix().then(setTeamMatrix).finally(() => setLoading(false));
+            ApiService.getTeamMatrix(selectedCategory, selectedRound.id)
+                .then(setTeamMatrix)
+                .finally(() => setLoading(false));
         }
-    }, [viewMode]);
+    }, [viewMode, selectedCategory, selectedRound]);
 
-    // Fetch Yearly Matrix Data
+    // Fetch By Round Data
     useEffect(() => {
-        if (viewMode === 'YEAR' && selectedPlayerId) {
+        if (viewMode === 'ROUND' && selectedPlayerId) {
             setLoading(true);
-            ApiService.getYearlyMatrix(selectedPlayerId).then(setYearlyMatrix).finally(() => setLoading(false));
+            ApiService.getYearlyMatrix(selectedPlayerId, selectedCategory)
+                .then(setYearlyMatrix)
+                .finally(() => setLoading(false));
         }
-    }, [selectedPlayerId, viewMode]);
+    }, [selectedPlayerId, viewMode, selectedCategory]);
 
     useEffect(() => {
         const obs = new ResizeObserver(() => {
             if (radarRef.current) {
-                setRadarSize({ 
-                    w: radarRef.current.offsetWidth, 
-                    h: Math.max(400, radarRef.current.offsetHeight) 
+                setRadarSize({
+                    w: Math.min(radarRef.current.offsetWidth, 700),
+                    h: 360
                 });
             }
         });
@@ -98,85 +110,104 @@ export const RatingComparison = () => {
         return () => obs.disconnect();
     }, []);
 
+    // Players filtered by position for the dropdown
+    const positionFilteredPlayers = players.filter(p => matchesPositionFilter(p.position, posFilter));
+
+    // Filter ratings by selected category for the gap table
     const filteredRatings = ratings.filter(r => r.category === selectedCategory);
 
-    const chartData = aggregatedRatings.map(r => ({
-        subject: r.category,
-        Coach: r.coach,
-        Self: r.self,
-        Squad: r.squad,
+    // Radar data: show per-skill averages for the selected category (matching the table)
+    const chartData = filteredRatings.map(r => ({
+        subject: r.skill.length > 20 ? r.skill.substring(0, 18) + '…' : r.skill,
+        Coach: r.coach_rating || 0,
+        Self: r.self_rating || 0,
     }));
 
-    if (loading && players.length === 0) return <div className="p-20 text-center text-white/40 font-work italic">Initialising Tactical Suite...</div>;
+    if (loading && players.length === 0) return <div className="p-20 text-center text-gray-500">Initialising Tactical Suite...</div>;
 
     const selectedPlayer = players.find(p => p.jumper_no === selectedPlayerId);
 
-    return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 h-full">
-            {/* Mode Switcher & Header */}
-            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between bg-[#1A1411] p-8 rounded-[2.5rem] shadow-2xl border border-white/5 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gold-400/5 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none group-hover:bg-gold-400/10 transition-colors"></div>
-                <div className="relative z-10 space-y-3">
-                    <h1 className="text-5xl font-black text-white uppercase tracking-tight font-space">Ratings <span className="text-gold-400">Comparison</span></h1>
-                    <div className="flex gap-2 mt-4 bg-white/5 p-1.5 rounded-2xl w-fit border border-white/10 shrink-0">
-                        {[
-                            { id: 'PLAYER', label: 'By Player', icon: User },
-                            { id: 'TEAM', label: 'By Team', icon: LayoutGrid },
-                            { id: 'YEAR', label: 'By Year', icon: Calendar },
-                        ].map(m => (
-                            <button
-                                key={m.id}
-                                onClick={() => setViewMode(m.id as ViewMode)}
-                                className={clsx(
-                                    "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 font-work",
-                                    viewMode === m.id
-                                        ? "bg-gold-500/20 text-gold-400 shadow-[0_0_15px_rgba(246,176,0,0.15)] border border-gold-400/30"
-                                        : "text-white/40 hover:text-white hover:bg-white/5 border border-transparent"
-                                )}
-                            >
-                                <m.icon size={14} />
-                                {m.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                
-                <div className="flex flex-col lg:flex-row lg:items-center gap-4 relative z-10 w-full lg:w-auto">
-                    {/* Only show Player Selector for PLAYER and YEAR modes */}
-                    {(viewMode === 'PLAYER' || viewMode === 'YEAR') && (
-                        <div className="w-full lg:w-72 relative group">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-gold-400 transition-colors" size={18} />
-                            <select
-                                className="w-full pl-12 pr-5 py-4 bg-white/5 border border-white/10 rounded-2xl appearance-none focus:ring-1 focus:ring-gold-400/50 focus:border-gold-400/50 outline-none font-medium text-white text-sm transition-all shadow-lg font-work"
-                                value={selectedPlayerId}
-                                onChange={e => setSelectedPlayerId(Number(e.target.value))}
-                            >
-                                <option value={0} className="bg-[#1A1411] text-white">Select Player...</option>
-                                {players.map(p => (
-                                    <option key={p.jumper_no} value={p.jumper_no} className="bg-[#1A1411] text-white">#{p.jumper_no} {p.name}</option>
-                                ))}
-                            </select>
-                        </div>
+    // Category filter pills — shown on all tabs
+    const CategoryFilter = () => (
+        <div className="flex gap-1 bg-hawks-hover p-1.5 rounded-2xl">
+            {CATEGORIES.map(cat => (
+                <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={clsx(
+                        "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                        selectedCategory === cat
+                            ? "bg-hfc-brown text-white shadow-lg"
+                            : "text-gray-400 hover:text-gray-100 hover:bg-hawks-card"
                     )}
+                    style={{ fontFamily: 'Work Sans, sans-serif' }}
+                >
+                    {cat}
+                </button>
+            ))}
+        </div>
+    );
 
-                    {viewMode === 'PLAYER' && selectedPlayerId !== 0 && (
-                        <div className="flex flex-wrap gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/10 w-full lg:w-auto overflow-x-auto custom-scrollbar shrink-0">
-                            {["Technical", "Tactical", "Physical", "Mental"].map(cat => (
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 h-full">
+            {/* Header */}
+            <div className="flex flex-col gap-4 bg-hawks-card p-6 rounded-3xl shadow-card border border-white/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-hawks-gold/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+
+                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between relative z-10">
+                    <div>
+                        <h1 className="text-2xl font-black text-hawks-gold tracking-tight uppercase" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Post Match Review</h1>
+                        <div className="flex gap-1 mt-3 bg-hawks-hover p-1 rounded-xl w-fit">
+                            {[
+                                { id: 'PLAYER', label: 'By Player', icon: User },
+                                { id: 'TEAM', label: 'By Team', icon: LayoutGrid },
+                                { id: 'ROUND', label: 'By Round', icon: BarChart2 },
+                            ].map(m => (
                                 <button
-                                    key={cat}
-                                    onClick={() => setSelectedCategory(cat)}
+                                    key={m.id}
+                                    onClick={() => setViewMode(m.id as ViewMode)}
                                     className={clsx(
-                                        "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap font-work shrink-0",
-                                        selectedCategory === cat
-                                            ? "bg-gold-400 text-[#0F0A07] shadow-[0_0_15px_rgba(246,176,0,0.3)]"
-                                            : "text-white/40 hover:text-white hover:bg-white/10"
+                                        "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                                        viewMode === m.id
+                                            ? "bg-hfc-brown text-white shadow-lg"
+                                            : "text-gray-400 hover:text-gray-100 hover:bg-hawks-card"
                                     )}
                                 >
-                                    {cat}
+                                    <m.icon size={14} />
+                                    {m.label}
                                 </button>
                             ))}
                         </div>
-                    )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 relative z-10">
+                        <RoundSelector seasons={seasons} selectedSeason={selectedSeason} onSeasonChange={setSelectedSeason} rounds={rounds} selectedRound={selectedRound} onRoundChange={setSelectedRound} />
+
+                        {(viewMode === 'PLAYER' || viewMode === 'ROUND') && (
+                            <div className="w-56 relative group">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-hawks-gold transition-colors" size={16} />
+                                <select
+                                    className="w-full pl-9 pr-3 py-2 bg-hawks-base border border-white/10 rounded-xl appearance-none focus:ring-2 focus:ring-hawks-gold/10 focus:border-hawks-gold outline-none font-bold text-sm text-gray-100 transition-all"
+                                    value={selectedPlayerId}
+                                    onChange={e => setSelectedPlayerId(Number(e.target.value))}
+                                >
+                                    <option value={0}>Select Player...</option>
+                                    {positionFilteredPlayers.map(p => (
+                                        <option key={p.jumper_no} value={p.jumper_no}>#{p.jumper_no} {p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Category + Position filters — all tabs */}
+                <div className="relative z-10 flex flex-wrap items-center gap-3">
+                    <CategoryFilter />
+                    <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Position</span>
+                        <PositionFilter value={posFilter} onChange={setPosFilter} compact />
+                    </div>
                 </div>
             </div>
 
@@ -186,58 +217,142 @@ export const RatingComparison = () => {
                     selectedPlayerId === 0 ? (
                         <EmptyState message="Please select a player to begin analysis." />
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            {/* Radar View */}
-                             <div className="bg-[#1A1411] p-8 rounded-[3rem] text-white border border-white/5 shadow-2xl relative flex flex-col overflow-hidden min-h-[500px]">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-gold-400/5 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none"></div>
-                                <div className="flex items-center justify-between mb-8 relative z-10">
-                                    <div className="flex items-center gap-5">
-                                        <div className="w-16 h-16 rounded-full border-4 border-[#0F0A07] shadow-[0_0_15px_rgba(246,176,0,0.2)] p-0.5 bg-[#1A1411]">
-                                            <img
-                                                src={formatPlayerImage(selectedPlayerId, selectedPlayer?.photo_url)}
-                                                className="w-full h-full object-cover rounded-full bg-[#0F0A07] grayscale-[20%]"
-                                                alt={selectedPlayer?.name}
-                                            />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-black text-2xl uppercase tracking-tight font-space leading-tight">{selectedPlayer?.name}</h3>
-                                            <p className="text-[10px] text-gold-400 font-black uppercase tracking-[0.3em] font-work mt-1">Alignment Radar</p>
-                                        </div>
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                             {/* Radar View — full width, capped height */}
+                             <div className="bg-hfc-brown p-6 rounded-2xl text-white border border-white/10 shadow-2xl relative overflow-hidden">
+                                <div className="flex items-center gap-3 mb-2 relative z-10">
+                                    <div className="w-10 h-10 rounded-full border-2 border-gold-400 p-0.5 bg-hfc-brown">
+                                        <img
+                                            src={formatPlayerImage(selectedPlayerId, selectedPlayer?.photo_url, selectedPlayer?.name)}
+                                            className="w-full h-full object-cover rounded-full bg-gray-800"
+                                            alt={selectedPlayer?.name}
+                                        />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-sm uppercase tracking-tight">{selectedPlayer?.name}</h3>
+                                        <p className="text-[9px] text-amber-300 font-bold uppercase tracking-widest">{selectedCategory} — Coach vs Self</p>
+                                    </div>
+                                    <div className="ml-auto flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest">
+                                        <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-white rounded"></div><span className="text-white/60">Coach</span></div>
+                                        <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-amber-400 rounded"></div><span className="text-amber-400/60">Self</span></div>
                                     </div>
                                 </div>
-                                <div ref={radarRef} className="flex-1 flex items-center justify-center min-h-[350px]">
-                                    <NativeRadarChart data={chartData} size={radarSize} categories={['Coach', 'Self', 'Squad']} colors={{ Coach: { stroke: '#ffffff', fill: '#ffffff', opacity: 0.1 }, Self: { stroke: '#f6b000', fill: 'transparent', opacity: 0 }, Squad: { stroke: '#ffffff30', fill: 'transparent', opacity: 0, dash: '4 4' } }} />
+                                <div ref={radarRef} className="flex items-center justify-center h-[380px]">
+                                    {chartData.length > 0 ? (
+                                        <NativeRadarChart data={chartData} size={radarSize} categories={['Coach', 'Self']} colors={{ Coach: { stroke: '#fff', fill: '#fff', opacity: 0.15 }, Self: { stroke: '#fbbf24', fill: 'transparent', opacity: 0 } }} />
+                                    ) : (
+                                        <p className="text-white/30 text-xs">No ratings for this round</p>
+                                    )}
                                 </div>
                              </div>
 
-                             {/* Gap Analysis Table */}
-                             <div className="bg-[#1A1411] p-8 rounded-[3rem] shadow-2xl border border-white/5 flex flex-col overflow-hidden relative">
-                                <h3 className="font-black text-2xl uppercase tracking-tight text-white mb-6 font-space border-b border-white/5 pb-6">Alignment Gaps</h3>
+                             {/* Gap Analysis Table — full width below, enhanced with squad benchmark */}
+                             <div className="bg-hawks-card p-6 rounded-2xl shadow-card border border-white/5 flex flex-col overflow-hidden">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-black text-lg uppercase tracking-tight text-gray-100">{selectedCategory} — Skill Breakdown</h3>
+                                    {/* Summary stat strip */}
+                                    {filteredRatings.length > 0 && (() => {
+                                        const rated = filteredRatings.filter(r => r.coach_rating && r.self_rating);
+                                        const avgCoach = rated.length ? rated.reduce((s, r) => s + (r.coach_rating || 0), 0) / rated.length : 0;
+                                        const avgSelf  = rated.length ? rated.reduce((s, r) => s + (r.self_rating || 0), 0) / rated.length : 0;
+                                        const avgSquad = rated.length ? rated.reduce((s, r) => s + (r.squad_avg || 0), 0) / rated.length : 0;
+                                        const topSkill = [...rated].sort((a, b) => (b.coach_rating || 0) - (a.coach_rating || 0))[0];
+                                        const devSkill = [...rated].sort((a, b) => (a.coach_rating || 0) - (b.coach_rating || 0))[0];
+                                        return (
+                                            <div className="flex items-center gap-4 text-[10px]">
+                                                <div className="text-right">
+                                                    <div className="font-black text-gray-100 text-sm">{avgCoach.toFixed(1)} <span className="text-gray-500">/</span> <span className="text-gold-500">{avgSelf.toFixed(1)}</span></div>
+                                                    <div className="text-gray-500 uppercase tracking-widest">Coach / Self Avg</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="font-black text-hawks-gold text-sm">{avgSquad.toFixed(1)}</div>
+                                                    <div className="text-gray-500 uppercase tracking-widest">Squad Avg</div>
+                                                </div>
+                                                {topSkill && (
+                                                    <div className="text-right">
+                                                        <div className="font-black text-emerald-400 text-[11px] truncate max-w-[140px]">↑ {topSkill.skill}</div>
+                                                        <div className="text-gray-500 uppercase tracking-widest">Top Skill</div>
+                                                    </div>
+                                                )}
+                                                {devSkill && (
+                                                    <div className="text-right">
+                                                        <div className="font-black text-rose-400 text-[11px] truncate max-w-[140px]">↓ {devSkill.skill}</div>
+                                                        <div className="text-gray-500 uppercase tracking-widest">Dev Focus</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
                                 <div className="overflow-y-auto flex-1 pr-2 custom-scrollbar">
                                     <table className="w-full">
-                                        <thead className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] font-work border-b border-white/5 sticky top-0 bg-[#1A1411] z-10 shadow-[0_10px_10px_-10px_rgba(0,0,0,0.5)]">
+                                        <thead className="text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-white/5 sticky top-0 bg-hawks-card">
                                             <tr>
-                                                <th className="pb-5 text-left bg-[#1A1411]">Skill</th>
-                                                <th className="pb-5 text-center bg-[#1A1411]">Staff</th>
-                                                <th className="pb-5 text-center bg-[#1A1411]">Self</th>
-                                                <th className="pb-5 text-right bg-[#1A1411]">Gap</th>
+                                                <th className="pb-3 text-left">Skill</th>
+                                                <th className="pb-3 text-center">Coach</th>
+                                                <th className="pb-3 text-center">Self</th>
+                                                <th className="pb-3 text-center">Squad Avg</th>
+                                                <th className="pb-3 text-center">vs Squad</th>
+                                                <th className="pb-3 text-center">Self-Awareness</th>
+                                                <th className="pb-3 text-right">Coach–Self Gap</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-white/[0.03]">
-                                            {filteredRatings.map((r, i) => (
-                                                <tr key={i} className="group transition-colors hover:bg-white/[0.02]">
-                                                    <td className="py-5">
-                                                        <div className="font-bold text-white/90 font-work text-sm">{r.skill}</div>
-                                                    </td>
-                                                    <td className="py-5 text-center font-black font-space text-lg text-white">{r.coach_rating}</td>
-                                                    <td className="py-5 text-center font-black font-space text-lg text-white/50 group-hover:text-gold-400 transition-colors">{r.self_rating}</td>
-                                                    <td className="py-5 text-right">
-                                                        <span className={clsx("px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest font-space border", (r.gap || 0) > 0 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]" : (r.gap || 0) < 0 ? "bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-[0_0_10px_rgba(243,24,96,0.1)]" : "bg-white/5 text-white/40 border-white/10")}>
-                                                            {(r.gap || 0) > 0 ? `+${r.gap}` : r.gap}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                        <tbody className="divide-y divide-white/5">
+                                            {filteredRatings.map((r, i) => {
+                                                const coach = r.coach_rating || 0;
+                                                const self_ = r.self_rating || 0;
+                                                const squad = r.squad_avg || 0;
+                                                const vsSquad = coach && squad ? Number((coach - squad).toFixed(1)) : null;
+                                                const absGap = Math.abs(r.gap || 0);
+                                                // Self-awareness: 5 = perfect match, scales down with gap
+                                                const awareness = coach && self_ ? Math.max(0, 5 - absGap) : null;
+                                                return (
+                                                    <tr key={i} className="group hover:bg-hawks-hover/50 transition-colors">
+                                                        <td className="py-3">
+                                                            <div className="font-bold text-gray-100 text-sm">{r.skill}</div>
+                                                        </td>
+                                                        <td className="py-3 text-center font-black text-gray-100">{coach || '—'}</td>
+                                                        <td className="py-3 text-center font-black text-gold-500">{self_ || '—'}</td>
+                                                        <td className="py-3 text-center font-bold text-gray-400">{squad ? squad.toFixed(1) : '—'}</td>
+                                                        <td className="py-3 text-center">
+                                                            {vsSquad !== null ? (
+                                                                <span className={clsx(
+                                                                    "px-2 py-0.5 rounded text-[11px] font-black",
+                                                                    vsSquad > 0.5 ? "bg-emerald-500/10 text-emerald-400" :
+                                                                    vsSquad < -0.5 ? "bg-rose-500/10 text-rose-400" :
+                                                                    "bg-hawks-hover text-gray-400"
+                                                                )}>
+                                                                    {vsSquad > 0 ? `+${vsSquad}` : vsSquad}
+                                                                </span>
+                                                            ) : <span className="text-gray-600 text-xs">—</span>}
+                                                        </td>
+                                                        <td className="py-3 text-center">
+                                                            {awareness !== null ? (
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    {[1, 2, 3, 4, 5].map(n => (
+                                                                        <div key={n} className={clsx(
+                                                                            "w-1.5 h-3 rounded-sm",
+                                                                            n <= Math.round(awareness)
+                                                                                ? awareness >= 4 ? "bg-emerald-400" : awareness >= 3 ? "bg-amber-400" : "bg-rose-400"
+                                                                                : "bg-hawks-hover"
+                                                                        )} />
+                                                                    ))}
+                                                                </div>
+                                                            ) : <span className="text-gray-600 text-xs">—</span>}
+                                                        </td>
+                                                        <td className="py-3 text-right">
+                                                            {coach && self_ ? (
+                                                                <span className={clsx("px-2 py-1 rounded-lg text-xs font-black", (r.gap || 0) > 0 ? "bg-emerald-500/10 text-emerald-400" : (r.gap || 0) < 0 ? "bg-rose-500/10 text-rose-400" : "bg-hawks-hover text-gray-500")}>
+                                                                    {(r.gap || 0) > 0 ? `+${r.gap}` : r.gap}
+                                                                </span>
+                                                            ) : <span className="text-gray-600 text-xs">—</span>}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {filteredRatings.length === 0 && (
+                                                <tr><td colSpan={7} className="py-8 text-center text-gray-500">No ratings for {selectedCategory} in this round</td></tr>
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -247,36 +362,27 @@ export const RatingComparison = () => {
                 )}
 
                 {viewMode === 'TEAM' && teamMatrix && (
-                    <div className="bg-[#1A1411] rounded-[2.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col h-[calc(100vh-320px)] animate-in zoom-in-95 duration-500 relative">
-                        <div className="bg-white/5 border-b border-white/5 px-8 py-6 text-white flex flex-col md:flex-row md:items-center justify-between shrink-0 gap-4">
+                    <div className="bg-hawks-card rounded-2xl shadow-xl border border-white/5 overflow-hidden flex flex-col h-[calc(100vh-380px)] animate-in zoom-in-95 duration-500">
+                        <div className="bg-hfc-brown p-5 text-white flex items-center justify-between">
                             <div>
-                                <h2 className="font-black text-2xl uppercase leading-none font-space tracking-tight">Team Performance <span className="text-gold-400">Heatmap</span></h2>
-                                <p className="text-white/40 text-[10px] font-black font-work uppercase tracking-[0.3em] mt-2">Squad Aggregate Assessment</p>
+                                <h2 className="font-black text-lg uppercase">{selectedCategory} — Team Matrix</h2>
+                                <p className="text-amber-300 text-[10px] font-bold uppercase tracking-widest mt-1">{selectedRound?.name || 'Latest'}</p>
                             </div>
-                            <div className="flex items-center gap-5 bg-[#0F0A07] border border-white/5 px-5 py-3 rounded-2xl shadow-lg">
-                                {[
-                                    { label: 'Under', color: 'bg-rose-500/20 border-rose-500/50' },
-                                    { label: 'Neutral', color: 'bg-white/5 border-white/20' },
-                                    { label: 'Elite', color: 'bg-emerald-500/20 border-emerald-500/50' },
-                                ].map(legend => (
-                                    <div key={legend.label} className="flex items-center gap-2">
-                                        <div className={clsx("w-3 h-3 rounded-md border", legend.color)} />
-                                        <span className="text-[10px] font-black uppercase text-white/50 font-work tracking-[0.1em]">{legend.label}</span>
-                                    </div>
-                                ))}
+                            <div className="text-[10px] font-black text-white/40 uppercase tracking-[0.15em]">
+                                Coach / Self (Gap)
                             </div>
                         </div>
-                        
-                        <div className="overflow-auto flex-1 custom-scrollbar relative bg-[#0F0A07]/50">
-                            <table className="w-full text-left border-separate border-spacing-0 min-w-max">
-                                <thead className="sticky top-0 z-30 bg-[#1A1411] shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] border-b border-white/5">
+
+                        <div className="overflow-auto flex-1 custom-scrollbar relative">
+                            <table className="w-full text-left border-collapse min-w-max">
+                                <thead className="sticky top-0 z-30 bg-hawks-hover shadow-card">
                                     <tr>
-                                        <th className="sticky left-0 z-40 bg-[#1A1411] p-4 min-w-[220px] border-b border-r border-white/5">
-                                            <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] font-work pl-4">Athlete</div>
+                                        <th className="sticky left-0 z-40 bg-hawks-hover p-3 min-w-[180px] border-b border-white/10">
+                                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Player</div>
                                         </th>
                                         {teamMatrix.skills.map(skill => (
-                                            <th key={skill} className="p-2 border-b border-white/5 text-center min-w-[50px] bg-[#1A1411]">
-                                                <div className="text-[10px] font-black text-white/70 font-work uppercase tracking-tighter leading-none whitespace-nowrap [writing-mode:vertical-lr] rotate-180 h-32 mx-auto py-4 group hover:text-gold-400 transition-colors cursor-default">
+                                            <th key={skill} className="p-3 border-b border-white/10 text-center min-w-[110px]">
+                                                <div className="text-[9px] font-black text-gray-100 uppercase tracking-tight leading-tight max-w-[100px] mx-auto whitespace-normal">
                                                     {skill}
                                                 </div>
                                             </th>
@@ -284,20 +390,23 @@ export const RatingComparison = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {teamMatrix.players.map((p, idx) => (
-                                        <tr key={p.id} className={clsx("group transition-colors hover:bg-white/[0.02]", idx % 2 === 0 ? "bg-transparent" : "bg-white/[0.01]")}>
-                                            <td className="sticky left-0 z-20 bg-inherit p-4 border-b border-r border-white/5 font-black text-white flex items-center gap-4 group-hover:bg-[#1A1411] transition-colors">
-                                                <span className="text-[10px] text-white/20 font-space w-6 text-right shrink-0">#{p.id}</span>
-                                                <div className="w-8 h-8 rounded-full overflow-hidden bg-[#0F0A07] border border-white/10 shrink-0 shadow-lg">
-                                                    <img src={formatPlayerImage(p.id)} className="w-full h-full object-cover grayscale-[20%]" alt="" />
+                                    {teamMatrix.players
+                                        .filter(mp => {
+                                            if (posFilter === 'ALL') return true;
+                                            const full = players.find(pl => pl.jumper_no === mp.id);
+                                            return matchesPositionFilter(full?.position, posFilter);
+                                        })
+                                        .map((p, idx) => (
+                                        <tr key={p.id} className={clsx("hover:bg-hawks-hover transition-colors", idx % 2 === 0 ? "bg-hawks-card" : "bg-hawks-base/30")}>
+                                            <td className="sticky left-0 z-20 bg-inherit p-3 border-b border-white/5 font-bold text-gray-100 text-sm flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-full overflow-hidden bg-hawks-gold/5 border border-white/10 hidden md:block shrink-0">
+                                                    <img src={formatPlayerImage(p.id, players.find(pl => pl.jumper_no === p.id)?.photo_url, p.name)} className="w-full h-full object-cover" alt="" />
                                                 </div>
-                                                <span className="text-[13px] truncate tracking-tight font-space uppercase text-white/90">{p.name}</span>
+                                                <span className="truncate">{p.name}</span>
                                             </td>
                                             {teamMatrix.skills.map(skill => (
-                                                <td key={skill} className="p-2 border-b border-white/[0.02] text-center">
-                                                    <div className="flex justify-center">
-                                                        <HeatmapCell value={teamMatrix.matrix[p.id]?.[skill]?.coach || 0} />
-                                                    </div>
+                                                <td key={skill} className="p-3 border-b border-white/5 text-center">
+                                                    <RatingCell rating={teamMatrix.matrix[p.id]?.[skill] || { coach: 0, self: 0 }} />
                                                 </td>
                                             ))}
                                         </tr>
@@ -308,33 +417,33 @@ export const RatingComparison = () => {
                     </div>
                 )}
 
-                {viewMode === 'YEAR' && (
+                {viewMode === 'ROUND' && (
                     selectedPlayerId === 0 ? (
-                        <EmptyState message="Select an athlete to view their longitudinal performance heatmap." />
+                        <EmptyState message="Select a player to view their round-by-round progression." />
                     ) : yearlyMatrix ? (
-                        <div className="bg-[#1A1411] rounded-[2.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col h-[calc(100vh-320px)] animate-in zoom-in-95 duration-500 relative">
-                            <div className="bg-white/5 border-b border-white/5 px-8 py-6 text-white flex items-center justify-between shrink-0">
-                                <div className="flex items-center gap-5">
-                                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-gold-400 bg-[#0F0A07] shadow-lg shrink-0">
-                                        <img src={formatPlayerImage(selectedPlayerId)} className="w-full h-full object-cover grayscale-[10%]" alt="" />
+                        <div className="bg-hawks-card rounded-2xl shadow-xl border border-white/5 overflow-hidden flex flex-col h-[calc(100vh-380px)] animate-in zoom-in-95 duration-500">
+                            <div className="bg-hfc-brown p-5 text-white flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/10 p-0.5 border border-white/20">
+                                        <img src={formatPlayerImage(selectedPlayerId, selectedPlayer?.photo_url, selectedPlayer?.name)} className="w-full h-full object-cover rounded-lg" alt="" />
                                     </div>
                                     <div>
-                                        <h2 className="font-black text-2xl uppercase leading-none font-space tracking-tight">{selectedPlayer?.name} <span className="text-gold-400">Progression</span></h2>
-                                        <p className="text-white/40 text-[10px] font-black font-work uppercase tracking-[0.3em] mt-2">Match-by-Match Visual Audit</p>
+                                        <h2 className="font-black text-lg uppercase">{selectedPlayer?.name} — {selectedCategory}</h2>
+                                        <p className="text-amber-300 text-[10px] font-bold uppercase tracking-widest mt-0.5">Round-by-Round Progression</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="overflow-auto flex-1 custom-scrollbar relative bg-[#0F0A07]/50">
-                                <table className="w-full text-left border-separate border-spacing-0 min-w-max">
-                                    <thead className="sticky top-0 z-30 bg-[#1A1411] shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] border-b border-white/5">
+                            <div className="overflow-auto flex-1 custom-scrollbar relative">
+                                <table className="w-full text-left border-collapse min-w-max">
+                                    <thead className="sticky top-0 z-30 bg-hawks-hover shadow-card">
                                         <tr>
-                                            <th className="sticky left-0 z-40 bg-[#1A1411] p-4 min-w-[160px] border-b border-r border-white/5">
-                                                <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] font-work pl-4">Round</div>
+                                            <th className="sticky left-0 z-40 bg-hawks-hover p-3 min-w-[130px] border-b border-white/10">
+                                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Round</div>
                                             </th>
                                             {yearlyMatrix.skills.map(skill => (
-                                                <th key={skill} className="p-2 border-b border-white/5 text-center min-w-[50px] bg-[#1A1411]">
-                                                    <div className="text-[10px] font-black text-white/70 font-work uppercase tracking-tighter leading-none whitespace-nowrap [writing-mode:vertical-lr] rotate-180 h-32 mx-auto py-4 group hover:text-gold-400 transition-colors cursor-default">
+                                                <th key={skill} className="p-3 border-b border-white/10 text-center min-w-[110px]">
+                                                    <div className="text-[9px] font-black text-gray-100 uppercase tracking-tight leading-tight max-w-[100px] mx-auto whitespace-normal">
                                                         {skill}
                                                     </div>
                                                 </th>
@@ -343,24 +452,29 @@ export const RatingComparison = () => {
                                     </thead>
                                     <tbody>
                                         {yearlyMatrix.rounds.map((round, idx) => (
-                                            <tr key={round} className={clsx("group transition-colors hover:bg-white/[0.02]", idx % 2 === 0 ? "bg-transparent" : "bg-white/[0.01]")}>
-                                                <td className="sticky left-0 z-20 bg-inherit p-4 px-8 border-b border-r border-white/5 font-black text-gold-400 text-sm font-space group-hover:bg-[#1A1411] transition-colors whitespace-nowrap">
+                                            <tr key={round} className={clsx("hover:bg-hawks-hover transition-colors", idx % 2 === 0 ? "bg-hawks-card" : "bg-hawks-base/30")}>
+                                                <td className="sticky left-0 z-20 bg-inherit p-3 border-b border-white/5 font-bold text-hawks-gold text-sm">
                                                     {round}
                                                 </td>
                                                 {yearlyMatrix.skills.map(skill => (
-                                                    <td key={skill} className="p-2 border-b border-white/[0.02] text-center">
-                                                        <div className="flex justify-center">
-                                                            <HeatmapCell value={yearlyMatrix.matrix[round]?.[skill]?.coach || 0} />
-                                                        </div>
+                                                    <td key={skill} className="p-3 border-b border-white/5 text-center">
+                                                        <RatingCell rating={yearlyMatrix.matrix[round]?.[skill] || { coach: 0, self: 0 }} />
                                                     </td>
                                                 ))}
                                             </tr>
                                         ))}
+                                        {yearlyMatrix.rounds.length === 0 && (
+                                            <tr><td colSpan={(yearlyMatrix.skills.length || 0) + 1} className="py-8 text-center text-gray-500">No ratings found for this player</td></tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                    ) : <EmptyState message="Loading longitudinal progression matrix..." />
+                    ) : <EmptyState message="Loading round progression..." />
+                )}
+
+                {viewMode === 'TEAM' && !teamMatrix && !loading && (
+                    <EmptyState message="No team ratings found for this round." />
                 )}
             </div>
         </div>
@@ -368,12 +482,11 @@ export const RatingComparison = () => {
 };
 
 const EmptyState = ({ message }: { message: string }) => (
-    <div className="flex flex-col items-center justify-center p-32 bg-[#1A1411] rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gold-400/5 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none group-hover:bg-gold-400/10 transition-colors"></div>
-        <div className="p-8 bg-white/5 border border-white/10 rounded-full mb-8 shadow-inner shadow-black/20 text-white/10 group-hover:text-gold-400/50 group-hover:border-gold-400/20 group-hover:bg-gold-500/5 transition-all">
-            <Activity size={56} className="relative z-10" />
+    <div className="flex flex-col items-center justify-center p-20 bg-hawks-card rounded-2xl border-2 border-dashed border-white/10 shadow-card">
+        <div className="p-5 bg-hawks-base rounded-full mb-4">
+            <Activity size={36} className="text-gray-500" />
         </div>
-        <h2 className="text-3xl font-black text-white mb-3 font-space uppercase tracking-tight relative z-10 text-center">Awaiting <span className="text-gold-400">Parameters</span></h2>
-        <p className="text-white/40 font-work italic text-sm text-center relative z-10 max-w-sm">{message}</p>
+        <h2 className="text-lg font-bold text-gray-100 mb-1">Awaiting Selection</h2>
+        <p className="text-gray-400 font-medium text-sm">{message}</p>
     </div>
 );
