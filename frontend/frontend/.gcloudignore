@@ -1,0 +1,9 @@
+# Exclude from Cloud Build upload to GCP
+node_modules/
+.env.local
+.env
+dist/
+.DS_Store
+*.log
+coverage/
+.vite/

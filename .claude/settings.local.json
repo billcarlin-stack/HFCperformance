@@ -42,7 +42,10 @@
       "Bash(powershell -Command \"Get-Content 'C:\\\\Temp\\\\lfl_backend_err.log' -Tail 30\")",
       "Bash(powershell -Command \"New-Item -ItemType Directory -Path 'C:\\\\Temp' -Force | Out-Null; Stop-Process -Name python -Force -ErrorAction SilentlyContinue; Start-Sleep 1; Start-Process -FilePath 'python' -ArgumentList 'app.py' -WorkingDirectory 'C:\\\\Users\\\\BillCarlin\\\\OneDrive - INTELIA PTY LTD\\\\Documents\\\\LocalFootyLegend\\\\backend' -WindowStyle Hidden -RedirectStandardOutput 'C:\\\\Temp\\\\lfl_out.log' -RedirectStandardError 'C:\\\\Temp\\\\lfl_err.log'; Start-Sleep 4; Invoke-RestMethod http://localhost:8081/health\")",
       "Bash(powershell -Command \"Get-Content 'C:\\\\Temp\\\\lfl_err.log'\")",
-      "Bash(powershell -Command \"Invoke-RestMethod 'http://localhost:8081/api/scout/fixture'\")"
+      "Bash(powershell -Command \"Invoke-RestMethod 'http://localhost:8081/api/scout/fixture'\")",
+      "Bash(powershell -Command ' *)",
+      "Bash(powershell -Command \"Get-Content 'C:\\\\Temp\\\\backend_err.log' -Tail 50\")",
+      "Bash(powershell -Command \"Invoke-RestMethod http://localhost:8081/health\")"
     ]
   }
 }
