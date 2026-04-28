@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 class FitnessSession(Base):
     __tablename__ = 'fitness_sessions'
+    __table_args__ = {'schema': 'coaching'}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     player_id = Column(Integer, nullable=False)
@@ -108,6 +109,7 @@ def get_latest_session(player_id: int, phases: list = None) -> dict | None:
 
 class FitnessPBs(Base):
     __tablename__ = 'fitness_pbs'
+    __table_args__ = {'schema': 'coaching'}
 
     player_id = Column(Integer, primary_key=True)
     run_2k_seconds = Column(Integer)

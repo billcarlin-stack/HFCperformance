@@ -130,6 +130,8 @@ export interface CoachRating {
     self_rating: number;
     squad_avg: number;
     gap: number;
+    coach_notes?: string;
+    self_notes?: string;
 }
 
 export interface AggregatedRating {
@@ -185,6 +187,7 @@ export interface FitnessPBs {
 
 export interface PlayerStats {
     jumper_no: number;
+    league_id?: number;
     name: string;
     position: string;
     games_played: number;
@@ -383,8 +386,23 @@ export const ApiService = {
         return response.data;
     },
 
+    // IDP Assessment Periods
+    getIdpPeriods: async (season?: string) => {
+        const q = season ? `?season=${season}` : '';
+        const res = await api.get<IdpAssessmentPeriod[]>(`/idp/periods${q}`);
+        return res.data;
+    },
+    createIdpPeriod: async (name: string, season = '2026', notes?: string) => {
+        const res = await api.post('/idp/periods', { name, season, notes });
+        return res.data as IdpAssessmentPeriod;
+    },
+    closeIdpPeriod: async (periodId: string) => {
+        const res = await api.post(`/idp/periods/${periodId}/close`, {});
+        return res.data as IdpAssessmentPeriod;
+    },
+
     // Stats
-    getStats2025: async (params?: { jumper_no?: number }) => {
+    getStats2025: async (params?: { jumper_no?: number; league_id?: number }) => {
         const response = await api.get<PlayerStats[]>('/stats/2025', { params });
         return response.data;
     },
@@ -578,7 +596,88 @@ export const ApiService = {
         const response = await api.get<any[]>('/analytics/season-averages');
         return response.data;
     },
+
+    // ── Game Ratings (1-5 weekly) ───────────────────────────────────────────
+    getCoachGameRatings: async (roundLabel?: string) => {
+        const q = roundLabel ? `?round=${encodeURIComponent(roundLabel)}` : '';
+        const response = await api.get<CoachGameRatingsResponse>(`/game-ratings/coach${q}`);
+        return response.data;
+    },
+    getCoachGameRatingMatrix: async (season?: string) => {
+        const q = season ? `?season=${encodeURIComponent(season)}` : '';
+        const response = await api.get<CoachGameRatingMatrix>(`/game-ratings/coach/matrix${q}`);
+        return response.data;
+    },
+    getCoachGameRatingRounds: async () => {
+        const response = await api.get<{ rounds: string[] }>('/game-ratings/coach/rounds');
+        return response.data.rounds;
+    },
+    submitCoachGameRatings: async (roundLabel: string, ratings: CoachGameRatingInput[], season = '2026') => {
+        const response = await api.post('/game-ratings/coach/bulk', {
+            round_label: roundLabel,
+            ratings,
+            season,
+        });
+        return response.data;
+    },
+    getSelfGameRatings: async () => {
+        const response = await api.get<{ ratings: SelfGameRating[] }>('/game-ratings/self');
+        return response.data.ratings;
+    },
+    submitSelfGameRating: async (roundLabel: string, rating: number, notes?: string, season = '2026') => {
+        const response = await api.post('/game-ratings/self', {
+            round_label: roundLabel,
+            rating,
+            notes,
+            season,
+        });
+        return response.data;
+    },
 };
+
+// ── Game Rating types ────────────────────────────────────────────────────────
+export interface CoachGameRatingInput {
+    player_id: number;
+    rating: number | null;  // 1..5 or null to skip
+    notes?: string;
+}
+
+export interface CoachGameRatingRow {
+    player_id: number;
+    rating: number;
+    notes: string | null;
+    round_label: string;
+    updated_at: string | null;
+}
+
+export interface CoachGameRatingsResponse {
+    round_label: string | null;
+    ratings: CoachGameRatingRow[];
+}
+
+export interface CoachGameRatingMatrix {
+    rounds: string[];
+    matrix: Record<string, Record<string, number>>;  // {player_id: {round_label: rating}}
+    notes: Record<string, Record<string, string>>;
+}
+
+export interface SelfGameRating {
+    round_label: string;
+    rating: number;
+    notes: string | null;
+    updated_at: string | null;
+}
+
+// ── IDP Assessment Period type ───────────────────────────────────────────────
+export interface IdpAssessmentPeriod {
+    id: string;
+    name: string;
+    season: string;
+    is_active: boolean;
+    notes: string | null;
+    created_at: string | null;
+    closed_at: string | null;
+}
 
 // ── Box Hill type ────────────────────────────────────────────────────────────
 export interface BoxHillPlayer {

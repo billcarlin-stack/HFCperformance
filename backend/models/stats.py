@@ -7,6 +7,7 @@ class PlayerStats(Base):
     __tablename__ = 'player_stats_2025'
 
     jumper_no = Column(Integer, ForeignKey('players_2026.jumper_no'), primary_key=True)
+    league_id = Column(Integer, primary_key=True, default=1)  # 1=AFL, 2=VFL
     games_played = Column(Integer, default=0)
     af_avg = Column(Float, default=0)
     rating_points = Column(Float, default=0)
@@ -24,6 +25,7 @@ class PlayerStats(Base):
     def to_dict(self):
         return {
             "jumper_no": self.jumper_no,
+            "league_id": self.league_id or 1,
             "games_played": self.games_played or 0,
             "af_avg": self.af_avg or 0,
             "rating_points": self.rating_points or 0,
@@ -37,13 +39,16 @@ class PlayerStats(Base):
             "hitouts_avg": self.hitouts_avg or 0
         }
 
-def get_player_stats_2025(jumper_no: int | None = None) -> list[dict]:
+def get_player_stats_2025(jumper_no: int | None = None, league_id: int | None = None) -> list[dict]:
     session = get_session()
     try:
         query = session.query(Player, PlayerStats).outerjoin(PlayerStats, Player.jumper_no == PlayerStats.jumper_no)
-        
+
         if jumper_no:
             query = query.filter(Player.jumper_no == jumper_no)
+
+        if league_id is not None:
+            query = query.filter(PlayerStats.league_id == league_id)
             
         results = query.order_by(PlayerStats.disposals_avg.desc().nullslast()).all()
         

@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Activity, Target, BarChart2, ClipboardList, LogOut, ClipboardCheck, Sparkles, UserCircle, MessageSquareCode, Shield, Sword, ChevronDown, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Target, BarChart2, ClipboardList, LogOut, ClipboardCheck, Sparkles, UserCircle, MessageSquareCode, Shield, Sword, ChevronDown, TrendingUp, Star } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../../context/AuthContext';
 
@@ -86,6 +86,7 @@ export const Sidebar = () => {
                     <>
                         <NavItem to="/checkin" icon={ClipboardCheck} label="Daily Check-In" />
                         <NavItem to="/woop" icon={Sparkles} label="WOOP Goals" />
+                        <NavItem to="/ratings/my-game" icon={Star} label="Rate My Game" />
                     </>
                 )}
 
@@ -99,8 +100,9 @@ export const Sidebar = () => {
                         {/* <NavItem to="/match-center/timeline" icon={Activity} label="Event Timeline" /> */}
                         <NavItem to="/match-center/comparison" icon={Sword} label="Player Comparison" />
                         <NavItem to="/team-builder" icon={ClipboardList} label="Team Builder" />
-                        <NavItem to="/ratings/input" icon={ClipboardCheck} label="Coach Review" />
-                        <NavItem to="/ratings/compare" icon={BarChart2} label="Post Match Player Review" />
+                        <NavItem to="/ratings/input" icon={ClipboardCheck} label="IDP Assessment (6-8 wks)" />
+                        <NavItem to="/ratings/game-entry" icon={Star} label="Game Ratings (1-5)" />
+                        <NavItem to="/ratings/compare" icon={BarChart2} label="Post Match Review" />
                     </>
                 )}
 

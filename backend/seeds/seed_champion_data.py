@@ -466,9 +466,11 @@ def load_combined_gps_stats(cur):
             goals NUMERIC,
             behinds NUMERIC,
             time_on_ground NUMERIC,
+            competition_id TEXT,
             UNIQUE(match_id, athlete_id, period_id)
         )
     """)
+    add_column_if_missing(cur, 'cd_player_match_stats', 'competition_id', 'TEXT')
 
     fname = "studio_results_20260415_1718.csv"
     path = os.path.join(DATA_DIR, fname)
@@ -497,11 +499,13 @@ def load_combined_gps_stats(cur):
                     gps_accels, gps_decels, gps_hmld, gps_field_min,
                     disposals, kicks, handballs, marks, tackles, clearances,
                     free_kicks, pressure_acts, inside_50s, rebound_50s,
-                    metres_gained, turnovers, goals, behinds, time_on_ground
+                    metres_gained, turnovers, goals, behinds, time_on_ground,
+                    competition_id
                 ) VALUES (
                     %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
                     %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
-                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                    %s
                 )
                 ON CONFLICT (match_id, athlete_id, period_id) DO UPDATE SET
                     match_date = EXCLUDED.match_date,
@@ -541,7 +545,8 @@ def load_combined_gps_stats(cur):
                     turnovers = EXCLUDED.turnovers,
                     goals = EXCLUDED.goals,
                     behinds = EXCLUDED.behinds,
-                    time_on_ground = EXCLUDED.time_on_ground
+                    time_on_ground = EXCLUDED.time_on_ground,
+                    competition_id = EXCLUDED.competition_id
             """, (
                 match_id, row.get('match_date', ''), row.get('match_name', ''),
                 row.get('activity_id', ''), row.get('activity_name', ''),
@@ -563,6 +568,7 @@ def load_combined_gps_stats(cur):
                 safe_numeric(row.get('metres_gained')), safe_numeric(row.get('turnovers')),
                 safe_numeric(row.get('goals')), safe_numeric(row.get('behinds')),
                 safe_numeric(row.get('time_on_ground')),
+                row.get('competition_id', ''),
             ))
             loaded += 1
 

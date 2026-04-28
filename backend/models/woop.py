@@ -5,6 +5,7 @@ import uuid
 
 class WoopGoal(Base):
     __tablename__ = 'woop_goals'
+    __table_args__ = {'schema': 'coaching'}
 
     id = Column(String(50), primary_key=True)
     player_id = Column(Integer, nullable=False)

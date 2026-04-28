@@ -5,6 +5,7 @@ from datetime import date
 
 class Season(Base):
     __tablename__ = 'seasons'
+    __table_args__ = {'schema': 'coaching'}
     id = Column(Integer, primary_key=True)
     name = Column(String(20), unique=True, nullable=False)
     is_current = Column(Boolean, default=False)
@@ -16,8 +17,9 @@ class Season(Base):
 
 class Round(Base):
     __tablename__ = 'rounds'
+    __table_args__ = {'schema': 'coaching'}
     id = Column(Integer, primary_key=True)
-    season_id = Column(Integer, ForeignKey('seasons.id'), nullable=False)
+    season_id = Column(Integer, ForeignKey('coaching.seasons.id'), nullable=False)
     name = Column(String(50), nullable=False)
     short_name = Column(String(10), nullable=False)
     match_date = Column(Date)

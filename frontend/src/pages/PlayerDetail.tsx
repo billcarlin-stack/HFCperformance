@@ -243,14 +243,18 @@ export const PlayerDetail = () => {
 
     const [playerInjuries, setPlayerInjuries] = useState<Injury[]>([]);
     const [stats2025, setStats2025] = useState<PlayerStats | null>(null);
+    const [statsLeagueTab, setStatsLeagueTab] = useState<1 | 2>(1);
     const [latestWellbeing, setLatestWellbeing] = useState<any>(null);
     const [woopGoals, setWoopGoals] = useState<any[]>([]);
     const [fitnessSession, setFitnessSession] = useState<any>(null);
     const [fitnessPBs, setFitnessPBs] = useState<any>(null);
     const [engagement, setEngagement] = useState<PlayerEngagement | null>(null);
     const [playerRounds, setPlayerRounds] = useState<AnalyticsPlayerRoundRow[]>([]);
+    const [idpRatings, setIdpRatings] = useState<any | null>(null);
+    const [idpPeriods, setIdpPeriods] = useState<any[]>([]);
+    const [selectedIdpPeriod, setSelectedIdpPeriod] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'personal' | 'footy' | 'fitness'>('personal');
+    const [activeTab, setActiveTab] = useState<'personal' | 'footy' | 'idp' | 'fitness'>('personal');
     const [showTeamModal, setShowTeamModal] = useState(false);
 
     const chartRef = useRef<HTMLDivElement>(null);
@@ -293,6 +297,14 @@ export const PlayerDetail = () => {
                             .then(rows => setPlayerRounds(Array.isArray(rows) ? rows : []))
                             .catch(() => setPlayerRounds([]));
                     }
+                    // IDP ratings (latest assessment) — non-fatal
+                    ApiService.getRatings(String(p.value.jumper_no))
+                        .then((data: any) => setIdpRatings(data))
+                        .catch(() => setIdpRatings(null));
+                    // Fetch IDP assessment periods for the period selector
+                    ApiService.getIdpPeriods()
+                        .then((ps: any[]) => setIdpPeriods(ps))
+                        .catch(() => {});
                 }
                 if (allInj.status === 'fulfilled' && Array.isArray(allInj.value)) setPlayerInjuries(allInj.value.filter((i: Injury) => i.player_id === Number(id)));
 
@@ -306,7 +318,24 @@ export const PlayerDetail = () => {
         }
     }, [id]);
 
+    // Re-fetch stats when league tab changes (skip on initial mount — already fetched above)
+    useEffect(() => {
+        if (!id) return;
+        ApiService.getStats2025({ jumper_no: Number(id), league_id: statsLeagueTab })
+            .then((data) => {
+                if (Array.isArray(data) && data.length > 0) setStats2025(data[0]);
+                else setStats2025(null);
+            })
+            .catch(() => setStats2025(null));
+    }, [statsLeagueTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Re-fetch IDP ratings when selected period changes
+    useEffect(() => {
+        if (!id || !player) return;
+        ApiService.getRatings(String(player.jumper_no))
+            .then((data: any) => setIdpRatings(data))
+            .catch(() => setIdpRatings(null));
+    }, [selectedIdpPeriod]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Expose modal toggle to sub-component
     useEffect(() => {
@@ -369,6 +398,7 @@ export const PlayerDetail = () => {
     const TABS = [
         { key: 'personal', label: 'Personal Info', icon: User },
         { key: 'footy',    label: 'Footy Overview', icon: Trophy },
+        { key: 'idp',      label: 'IDP Ratings', icon: Target },
         { key: 'fitness',  label: 'Fitness Performance', icon: Activity },
     ] as const;
 
@@ -527,6 +557,106 @@ export const PlayerDetail = () => {
                 </div>
             )}
 
+            {/* ── Tab: IDP Ratings ──────────────────────────────────────────────────── */}
+            {activeTab === 'idp' && (
+                <div className="space-y-6">
+                    <div className="bg-hawks-card border border-white/5 rounded-3xl p-6">
+                        <div className="flex items-center justify-between mb-5">
+                            <div>
+                                <h3 className="text-xl font-black uppercase tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                                    Individual Development Plan <span className="text-hawks-gold">(1–10)</span>
+                                </h3>
+                                <p className="text-gray-400 text-sm mt-1">
+                                    Longitudinal coach vs self assessment, refreshed every 6–8 weeks across the four pillars.
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                {idpPeriods.length > 0 && (
+                                    <div>
+                                        <label className="block text-[9px] uppercase tracking-widest text-gray-500 mb-1">Assessment Period</label>
+                                        <select
+                                            value={selectedIdpPeriod ?? ''}
+                                            onChange={e => setSelectedIdpPeriod(e.target.value || null)}
+                                            className="px-3 py-1.5 rounded-xl text-xs bg-hawks-base border border-white/10 text-gray-100 focus:outline-none focus:border-hawks-gold/50"
+                                        >
+                                            <option value="">All (latest)</option>
+                                            {idpPeriods.map((p: any) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.name}{!p.is_active ? ' (closed)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                                {isCoach && (
+                                    <Link to="/ratings/input" className="px-4 py-2 rounded-xl bg-hawks-gold text-black text-xs uppercase tracking-widest font-bold hover:bg-hawks-gold/90">
+                                        New Assessment
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+
+                        {!idpRatings || !idpRatings.aggregated || idpRatings.aggregated.length === 0 ? (
+                            <div className="py-10 text-center text-gray-500 text-sm">
+                                No IDP ratings recorded yet for this player.
+                            </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                    {idpRatings.aggregated.map((cat: any) => (
+                                        <div key={cat.category} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                                            <div className="text-[10px] uppercase tracking-widest text-amber-300/70 font-bold">{cat.category}</div>
+                                            <div className="flex items-baseline gap-2 mt-2">
+                                                <span className="text-3xl font-black text-hawks-gold">{Number(cat.coach || 0).toFixed(1)}</span>
+                                                <span className="text-gray-500 text-xs">/ 10</span>
+                                            </div>
+                                            <div className="mt-2 text-[11px] text-gray-400">
+                                                Self: <span className="text-white font-bold">{Number(cat.self || 0).toFixed(1)}</span>
+                                                <span className="ml-3">Squad: <span className="text-gray-300">{Number(cat.squad || 0).toFixed(1)}</span></span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="text-[10px] uppercase tracking-widest text-amber-300/60">
+                                            <tr className="border-b border-white/5">
+                                                <th className="px-3 py-2 text-left">Skill</th>
+                                                <th className="px-3 py-2 text-left">Category</th>
+                                                <th className="px-3 py-2 text-center w-20">Coach</th>
+                                                <th className="px-3 py-2 text-center w-20">Self</th>
+                                                <th className="px-3 py-2 text-center w-20">Squad</th>
+                                                <th className="px-3 py-2 text-center w-20">Gap</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(idpRatings.ratings || []).map((r: any, i: number) => (
+                                                <tr key={`${r.skill}-${i}`} className="border-b border-white/5 last:border-0">
+                                                    <td className="px-3 py-2 text-white font-medium">{r.skill}</td>
+                                                    <td className="px-3 py-2 text-gray-400 text-xs">{r.category}</td>
+                                                    <td className="px-3 py-2 text-center text-hawks-gold font-bold">{r.coach_rating ?? '—'}</td>
+                                                    <td className="px-3 py-2 text-center text-white">{r.self_rating ?? '—'}</td>
+                                                    <td className="px-3 py-2 text-center text-gray-400">{r.squad_avg ? Number(r.squad_avg).toFixed(1) : '—'}</td>
+                                                    <td className={clsx('px-3 py-2 text-center font-bold',
+                                                        (r.gap ?? 0) > 1 ? 'text-emerald-400' : (r.gap ?? 0) < -1 ? 'text-red-400' : 'text-gray-400')}>
+                                                        {r.gap != null ? (r.gap > 0 ? '+' : '') + Number(r.gap).toFixed(1) : '—'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="mt-4 text-[10px] text-gray-600 uppercase tracking-widest">
+                                    Squad-wide cross-comparison view available in <Link to="/ratings/compare" className="text-hawks-gold hover:underline">Post Match Review</Link>.
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* ── Tab: Footy Overview ───────────────────────────────────────────────── */}
             {activeTab === 'footy' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -667,12 +797,30 @@ export const PlayerDetail = () => {
                         </div>
 
                         {/* Season Stats */}
-                        {stats2025 && (
-                            <div className="bg-hawks-card p-8 rounded-3xl border border-white/5">
-                                <h3 className="font-bold text-xl text-gray-100 border-b-2 border-hawks-gold pb-2 mb-6 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                        <div className="bg-hawks-card p-8 rounded-3xl border border-white/5">
+                            <div className="flex items-center justify-between border-b-2 border-hawks-gold pb-2 mb-6">
+                                <h3 className="font-bold text-xl text-gray-100 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                                     <Trophy size={20} className="text-hawks-gold" />
                                     2025 Season Averages
                                 </h3>
+                                <div className="bg-hawks-base p-1 rounded-xl border border-white/10 flex shadow-inner">
+                                    {([{ id: 1 as const, label: 'AFL' }, { id: 2 as const, label: 'VFL' }]).map(({ id, label }) => (
+                                        <button
+                                            key={id}
+                                            onClick={() => setStatsLeagueTab(id)}
+                                            className={clsx(
+                                                "px-4 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                                                statsLeagueTab === id
+                                                    ? "bg-hawks-gold text-hawks-base shadow-lg"
+                                                    : "text-amber-200/40 hover:text-white"
+                                            )}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            {stats2025 ? (
                                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
                                     {[
                                         { label: 'Games', value: stats2025.games_played },
@@ -695,8 +843,10 @@ export const PlayerDetail = () => {
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                <p className="text-amber-200/40 text-sm text-center py-4">No {statsLeagueTab === 1 ? 'AFL' : 'VFL'} stats available for this player.</p>
+                            )}
+                        </div>
 
                         {/* Injury History */}
                         <div className="bg-hawks-card p-8 rounded-3xl border border-white/5">

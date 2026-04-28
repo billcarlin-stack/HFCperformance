@@ -18,6 +18,7 @@ class CoachRating(Base):
     notes = Column(Text)
     date = Column(String(10)) # YYYY-MM-DD
     round_id = Column(Integer)
+    assessment_period_id = Column(String(36), nullable=True)
     source = Column(String(20), nullable=False, default='coach') # 'coach' or 'player'
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -36,8 +37,9 @@ def submit_rating(data: dict) -> dict:
         round_id = data.get("round_id")
         if round_id is not None:
             round_id = int(round_id)
+        assessment_period_id = data.get("assessment_period_id")
 
-        # Look for existing rating matching player/skill/source/round
+        # Look for existing rating matching player/skill/source/round/period
         query = session.query(CoachRating).filter(
             CoachRating.player_id == player_id,
             CoachRating.skill_name == skill_name,
@@ -48,6 +50,10 @@ def submit_rating(data: dict) -> dict:
             query = query.filter(CoachRating.round_id == round_id)
         else:
             query = query.filter(CoachRating.round_id.is_(None))
+        if assessment_period_id is not None:
+            query = query.filter(CoachRating.assessment_period_id == assessment_period_id)
+        else:
+            query = query.filter(CoachRating.assessment_period_id.is_(None))
 
         existing = query.first()
 
@@ -66,6 +72,7 @@ def submit_rating(data: dict) -> dict:
                 notes=data.get("notes", ""),
                 date=datetime.now().strftime("%Y-%m-%d"),
                 round_id=round_id,
+                assessment_period_id=assessment_period_id,
                 source=source,
             )
             session.add(new_rating)

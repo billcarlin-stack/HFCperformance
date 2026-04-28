@@ -37,7 +37,7 @@ def get_team_insights():
     try:
         players = get_all_players()
         if not players:
-            return jsonify({"error": "No players found"}), 404
+            return jsonify({"daily_averages": {}, "insights": [], "fitness_stats": {"avg_top_speed": 0, "avg_distance": 0, "avg_load": 0, "count": 0}}), 200
 
         # Aggregate surveys from all players (last 14 days)
         all_surveys = []
@@ -110,24 +110,78 @@ def get_team_insights():
                 if avg_soreness < 6.5: # Lower is worse
                     insights.append(f"{pos} group showing high soreness load ({round(avg_soreness, 1)} avg)")
 
-        # 3. Fitness Aggregates
+        # 3. Fitness Aggregates — prefer real cd_gps data, fallback to fitness_sessions
         fitness_stats = {
             "avg_top_speed": 0,
             "avg_distance": 0,
             "avg_load": 0,
             "count": 0
         }
-        if all_fitness:
-            fitness_stats = {
-                "avg_top_speed": round(statistics.mean(f["top_speed_kmh"] for f in all_fitness), 1),
-                "avg_distance": round(statistics.mean(f["distance_km"] for f in all_fitness), 2),
-                "avg_load": round(statistics.mean(f["total_load"] for f in all_fitness), 0),
-                "count": len(all_fitness)
-            }
-            
-            # Add fitness insight if speed is high
-            if fitness_stats["avg_top_speed"] > 31:
-                insights.append(f"Squad peak speed trending high ({fitness_stats['avg_top_speed']} km/h avg)")
+
+        # Try to pull from cd_gps (Champion Data real GPS) — most recent session/match
+        try:
+            from db.cloudsql_client import get_session as get_db_session
+            from sqlalchemy import text
+            db_session = get_db_session()
+            result = db_session.execute(text("""
+                SELECT
+                    COUNT(DISTINCT jersey)            AS player_count,
+                    ROUND(AVG(max_vel)::numeric, 1)   AS avg_peak_speed_ms,
+                    ROUND(AVG(distance_m / 1000.0)::numeric, 2) AS avg_dist_km,
+                    ROUND(AVG(player_load)::numeric, 0) AS avg_load
+                FROM cd_gps
+                WHERE match_id = (
+                    SELECT match_id FROM cd_gps
+                    ORDER BY match_id DESC
+                    LIMIT 1
+                )
+                AND jersey IS NOT NULL
+                AND max_vel > 0
+            """)).fetchone()
+
+            if result and result[0] and int(result[0]) > 0:
+                # max_vel from Champion Data is in m/s — convert to km/h
+                peak_kmh = round(float(result[1]) * 3.6, 1) if result[1] else 0
+                fitness_stats = {
+                    "avg_top_speed": peak_kmh,
+                    "avg_distance": float(result[2]) if result[2] else 0,
+                    "avg_load": float(result[3]) if result[3] else 0,
+                    "count": int(result[0])
+                }
+                if fitness_stats["avg_top_speed"] > 31:
+                    insights.append(f"Squad peak speed trending high ({fitness_stats['avg_top_speed']} km/h avg)")
+                logger.info("fitness_stats sourced from cd_gps: %s", fitness_stats)
+            elif all_fitness:
+                # Fallback to fitness_sessions if cd_gps is empty
+                speeds = [f["top_speed_kmh"] for f in all_fitness if f.get("top_speed_kmh")]
+                distances = [f["distance_km"] for f in all_fitness if f.get("distance_km")]
+                loads = [f["total_load"] for f in all_fitness if f.get("total_load")]
+                fitness_stats = {
+                    "avg_top_speed": round(statistics.mean(speeds), 1) if speeds else 0,
+                    "avg_distance": round(statistics.mean(distances), 2) if distances else 0,
+                    "avg_load": round(statistics.mean(loads), 0) if loads else 0,
+                    "count": len(all_fitness)
+                }
+                if fitness_stats["avg_top_speed"] > 31:
+                    insights.append(f"Squad peak speed trending high ({fitness_stats['avg_top_speed']} km/h avg)")
+        except Exception as fit_err:
+            logger.warning("Could not query cd_gps for fitness stats: %s", fit_err)
+            # Roll back so the poisoned transaction doesn't cascade into other
+            # routes sharing this scoped session.
+            try:
+                db_session.rollback()
+            except Exception:
+                pass
+            if all_fitness:
+                speeds = [f["top_speed_kmh"] for f in all_fitness if f.get("top_speed_kmh")]
+                distances = [f["distance_km"] for f in all_fitness if f.get("distance_km")]
+                loads = [f["total_load"] for f in all_fitness if f.get("total_load")]
+                fitness_stats = {
+                    "avg_top_speed": round(statistics.mean(speeds), 1) if speeds else 0,
+                    "avg_distance": round(statistics.mean(distances), 2) if distances else 0,
+                    "avg_load": round(statistics.mean(loads), 0) if loads else 0,
+                    "count": len(all_fitness)
+                }
 
         return jsonify({
             "daily_averages": daily_averages,

@@ -21,6 +21,8 @@ import AdminSettings from './pages/AdminSettings';
 import { PlayerReview } from './pages/PlayerReview';
 import Analytics from './pages/Analytics';
 import MatchDebrief from './pages/MatchDebrief';
+import { CoachGameRatings } from './pages/CoachGameRatings';
+import { PlayerGameRating } from './pages/PlayerGameRating';
 
 
 
@@ -84,6 +86,7 @@ function AppRoutes() {
         <Route path="stats" element={<CoachOnly><StatsPage /></CoachOnly>} />
         <Route path="ratings/input" element={<CoachOnly><CoachRatings /></CoachOnly>} />
         <Route path="ratings/compare" element={<CoachOnly><RatingComparison /></CoachOnly>} />
+        <Route path="ratings/game-entry" element={<CoachOnly><CoachGameRatings /></CoachOnly>} />
         <Route path="team-builder" element={<CoachOnly><TeamBuilder /></CoachOnly>} />
         
         <Route path="analytics" element={<CoachOnly><Analytics /></CoachOnly>} />
@@ -104,6 +107,7 @@ function AppRoutes() {
         <Route path="checkin" element={<PlayerOnly><DailyCheckIn /></PlayerOnly>} />
         <Route path="woop" element={<PlayerOnly><WoopGoals /></PlayerOnly>} />
         <Route path="ratings/player-review" element={<PlayerReview />} />
+        <Route path="ratings/my-game" element={<PlayerOnly><PlayerGameRating /></PlayerOnly>} />
 
 
         <Route path="idp" element={<div className="p-10">IDP Module Coming Soon</div>} />

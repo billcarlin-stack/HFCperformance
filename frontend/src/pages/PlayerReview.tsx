@@ -90,17 +90,17 @@ export const PlayerReview = () => {
                     setRadarData(formatted);
                 }
 
-                // Pre-populate sliders with existing self-ratings
+                // Pre-populate sliders + notes with existing self-ratings
                 if (data?.ratings) {
                     const existingRatings: Record<string, number> = {};
+                    const existingNotes: Record<string, string> = {};
                     for (const r of data.ratings) {
-                        if (r.self_rating) {
-                            const key = `${r.category}_${r.skill}`;
-                            existingRatings[key] = r.self_rating;
-                        }
+                        const key = `${r.category}_${r.skill}`;
+                        if (r.self_rating) existingRatings[key] = r.self_rating;
+                        if (r.self_notes) existingNotes[key] = r.self_notes;
                     }
                     setRatings(existingRatings);
-                    setNotes({});
+                    setNotes(existingNotes);
                 }
             } catch (err) {
                 console.error("Failed to fetch player ratings", err);
@@ -160,12 +160,14 @@ export const PlayerReview = () => {
             const data = await ApiService.getRatings(selectedPlayerId.toString(), selectedRound.id);
             if (data?.ratings) {
                 const existingRatings: Record<string, number> = {};
+                const existingNotes: Record<string, string> = {};
                 for (const r of data.ratings) {
-                    if (r.self_rating) {
-                        existingRatings[`${r.category}_${r.skill}`] = r.self_rating;
-                    }
+                    const key = `${r.category}_${r.skill}`;
+                    if (r.self_rating) existingRatings[key] = r.self_rating;
+                    if (r.self_notes) existingNotes[key] = r.self_notes;
                 }
                 setRatings(existingRatings);
+                setNotes(existingNotes);
             }
             setTimeout(() => setSuccess(false), 3000);
         } catch (err) {

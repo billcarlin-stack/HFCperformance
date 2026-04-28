@@ -34,12 +34,6 @@ def list_calendar_events():
 
     try:
         events = get_events(start_date, end_date, player_id)
-        # Format datetimes for JSON
-        for e in events:
-            if 'start_time' in e: e['start_time'] = e['start_time'].isoformat()
-            if 'end_time' in e: e['end_time'] = e['end_time'].isoformat()
-            if 'created_at' in e: e['created_at'] = e['created_at'].isoformat()
-            
         return jsonify(events), 200
     except Exception as e:
         logger.error("Error listing calendar events: %s", str(e))

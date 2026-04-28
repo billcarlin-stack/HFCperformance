@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime, JSON
 from db.cloudsql_client import Base, get_session
 
@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 class CalendarEvent(Base):
     __tablename__ = 'calendar_events'
+    __table_args__ = {'schema': 'coaching'}
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     title = Column(String(255), nullable=False)
@@ -16,7 +17,7 @@ class CalendarEvent(Base):
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
     player_ids = Column(JSON) # Store as list of IDs
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 def create_event(data: dict) -> dict:
     """Inserts a calendar event record into Cloud SQL."""
@@ -37,10 +38,10 @@ def create_event(data: dict) -> dict:
             "title": record.title,
             "type": record.type,
             "description": record.description,
-            "start_time": record.start_time.isoformat(),
-            "end_time": record.end_time.isoformat(),
+            "start_time": _to_iso(record.start_time),
+            "end_time": _to_iso(record.end_time),
             "player_ids": record.player_ids,
-            "created_at": record.created_at.isoformat()
+            "created_at": _to_iso(record.created_at)
         }
     except Exception as e:
         session.rollback()
@@ -49,35 +50,43 @@ def create_event(data: dict) -> dict:
     finally:
         session.close()
 
+def _to_iso(val) -> str | None:
+    """Safely converts a datetime or ISO string to an ISO string."""
+    if val is None:
+        return None
+    if isinstance(val, str):
+        return val
+    return val.isoformat()
+
 def get_events(start_date: str = None, end_date: str = None, player_id: int = None) -> list[dict]:
     """Retrieves calendar events from Cloud SQL."""
     session = get_session()
     try:
         query = session.query(CalendarEvent)
-        
+
         if start_date:
             query = query.filter(CalendarEvent.start_time >= start_date)
         if end_date:
             query = query.filter(CalendarEvent.start_time <= end_date)
-            
+
         events_objs = query.order_by(CalendarEvent.start_time.asc()).all()
-        
+
         events = []
         for e in events_objs:
             # Filter by player_id
             if player_id:
                 if e.player_ids and player_id not in e.player_ids:
                     continue
-            
+
             events.append({
                 "id": e.id,
                 "title": e.title,
                 "type": e.type,
                 "description": e.description,
-                "start_time": e.start_time.isoformat(),
-                "end_time": e.end_time.isoformat(),
+                "start_time": _to_iso(e.start_time),
+                "end_time": _to_iso(e.end_time),
                 "player_ids": e.player_ids,
-                "created_at": e.created_at.isoformat()
+                "created_at": _to_iso(e.created_at)
             })
         return events
     finally:

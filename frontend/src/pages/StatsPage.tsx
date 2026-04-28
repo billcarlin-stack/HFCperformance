@@ -19,11 +19,13 @@ const StatsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'disposals_avg', direction: 'desc' });
     const [viewMode, setViewMode] = useState<'Average' | 'Total'>('Average');
+    const [leagueId, setLeagueId] = useState<1 | 2>(1);
 
     useEffect(() => {
         const fetchStats = async () => {
+            setLoading(true);
             try {
-                const data = await ApiService.getStats2025();
+                const data = await ApiService.getStats2025({ league_id: leagueId });
                 setStats(data);
             } catch (error) {
                 console.error('Error fetching stats:', error);
@@ -32,7 +34,7 @@ const StatsPage = () => {
             }
         };
         fetchStats();
-    }, []);
+    }, [leagueId]);
 
     const handleSort = (key: keyof PlayerStats) => {
         let direction: 'asc' | 'desc' = 'desc';
@@ -103,6 +105,24 @@ const StatsPage = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {/* League Toggle */}
+                    <div className="bg-hawks-base p-1.5 rounded-2xl border border-white/10 flex shadow-inner">
+                        {([{ id: 1, label: 'AFL' }, { id: 2, label: 'VFL' }] as const).map(({ id, label }) => (
+                            <button
+                                key={id}
+                                onClick={() => setLeagueId(id)}
+                                className={clsx(
+                                    "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                                    leagueId === id
+                                        ? "bg-hawks-gold text-hawks-base shadow-lg"
+                                        : "text-amber-200/40 hover:text-white"
+                                )}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
                     {/* View Toggle */}
                     <div className="bg-hawks-base p-1.5 rounded-2xl border border-white/10 flex shadow-inner">
                         {['Total', 'Average'].map((mode) => (

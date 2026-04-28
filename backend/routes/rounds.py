@@ -22,7 +22,7 @@ def current_season():
     try:
         season = get_current_season()
         if not season:
-            return jsonify({"error": "No current season configured"}), 404
+            return jsonify({"season": None, "rounds": [], "current_round": None}), 200
         rounds = get_rounds_for_season(season["id"])
         current_round = get_current_round()
         return jsonify({

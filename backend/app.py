@@ -72,6 +72,7 @@ def create_app(config=None):
     from routes.analytics import analytics_bp
     from routes.debrief import debrief_bp
     from routes.box_hill import box_hill_bp
+    from routes.game_ratings import game_ratings_bp
 
     app.register_blueprint(players_bp)
     app.register_blueprint(idp_bp)
@@ -96,6 +97,7 @@ def create_app(config=None):
     app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
     app.register_blueprint(debrief_bp, url_prefix='/api/debrief')
     app.register_blueprint(box_hill_bp, url_prefix='/api/players')
+    app.register_blueprint(game_ratings_bp, url_prefix='/api/game-ratings')
 
     # ── Temporary Admin/Seed Route ────────────────────────────────
     @app.route('/api/admin/seed', methods=['GET'])

@@ -11,67 +11,158 @@ import { useAuth } from '../context/AuthContext';
 import { ApiService } from '../services/api';
 import type { TeamInsights } from '../services/api';
 import {
-    Activity,
-    TrendingUp,
-    TrendingDown,
     AlertTriangle,
     CheckCircle,
-    Users,
-    Zap
+    Zap,
+    Star,
+    TrendingUp,
+    TrendingDown,
+    Minus,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import hfcLogo from '../assets/hfc-logo.png';
 import { DailySchedule } from '../components/dashboard/DailySchedule';
+import { useFavourites } from '../hooks/useFavourites';
+import { Link } from 'react-router-dom';
+import type { CoachGameRatingMatrix, Player } from '../services/api';
 
 const Skeleton = ({ className }: { className?: string }) => (
     <div className={`bg-hawks-hover animate-pulse rounded ${className}`}></div>
 );
 
-const StatCard = ({ title, value, subtext, icon: Icon, trend, color, loading }: any) => {
-    if (loading) return (
-        <div className="bg-hawks-card p-6 rounded-xl border border-white/5 h-32 flex flex-col justify-between">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-4 w-32" />
-        </div>
-    );
+/**
+ * Focus Watchlist — shows how favourited players are trending based on recent
+ * coach game ratings. Uses the same localStorage favourites as the Players page.
+ */
+const FocusWatchlist = ({ players, matrix }: { players: Player[]; matrix: CoachGameRatingMatrix | null }) => {
+    const { favourites } = useFavourites();
+    const byNum = new Map(players.map(p => [p.jumper_no, p]));
 
-    return (
-        <div className="bg-hawks-card p-6 rounded-xl border border-white/5 flex items-start justify-between">
-            <div>
-                <p className="text-gray-400 text-sm font-medium uppercase tracking-wide" style={{ fontFamily: 'Work Sans, sans-serif' }}>{title}</p>
-                <h3 className="text-3xl font-bold mt-2 text-white">{value}</h3>
-                <p className={`text-sm mt-2 flex items-center gap-1 ${trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
-                    {trend === 'up' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                    {subtext}
+    if (favourites.length === 0) {
+        return (
+            <div className="bg-hawks-card p-6 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-2 mb-3">
+                    <Star size={16} className="text-hawks-gold fill-hawks-gold" />
+                    <h3 className="text-sm uppercase tracking-widest text-amber-300/70 font-bold">Focus Watchlist</h3>
+                </div>
+                <p className="text-gray-500 text-sm">
+                    Star a couple of players on the <Link to="/players" className="text-hawks-gold hover:underline">Players & Squad</Link> page to pin them here and track their form.
                 </p>
             </div>
-            <div className={`p-3 rounded-lg ${color}`}>
-                <Icon size={24} className="text-white" />
+        );
+    }
+
+    return (
+        <div className="bg-hawks-card p-6 rounded-2xl border border-white/5">
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <Star size={16} className="text-hawks-gold fill-hawks-gold" />
+                    <h3 className="text-sm uppercase tracking-widest text-amber-300/70 font-bold">Focus Watchlist</h3>
+                </div>
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest">Last 10 Rounds</span>
+            </div>
+            <div className="space-y-3">
+                {favourites.map(jn => {
+                    const p = byNum.get(jn);
+                    if (!p) return null;
+                    const ratings = matrix?.matrix[String(jn)] || {};
+                    const recentRounds = (matrix?.rounds || []).slice(-10);
+                    const recentValues = recentRounds.map(r => ratings[r]).filter(v => v != null) as number[];
+                    const avg = recentValues.length
+                        ? (recentValues.reduce((s, v) => s + v, 0) / recentValues.length)
+                        : null;
+                    const trend = getTrend(recentValues);
+                    return (
+                        <Link
+                            key={jn}
+                            to={`/players/${jn}`}
+                            className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] transition-colors group"
+                        >
+                            <div className="h-9 w-9 rounded-lg bg-hfc-brown text-hawks-gold flex items-center justify-center font-black text-xs">
+                                {jn}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-white font-bold text-sm truncate group-hover:text-hawks-gold transition-colors">{p.name}</p>
+                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{p.position}</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-1 justify-end">
+                                {recentRounds.map(r => {
+                                    const v = ratings[r];
+                                    return (
+                                        <div
+                                            key={r}
+                                            title={`${r}: ${v ?? '—'}`}
+                                            className={clsx(
+                                                'h-6 w-6 rounded-md flex items-center justify-center text-[10px] font-bold ring-1',
+                                                v ? ratingTone(v) : 'bg-white/[0.02] text-gray-600 ring-white/5'
+                                            )}
+                                        >
+                                            {v ?? '—'}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="w-14 text-right">
+                                <div className="flex items-center justify-end gap-1 text-xs font-bold">
+                                    {trend === 'up' && <TrendingUp size={12} className="text-green-400" />}
+                                    {trend === 'down' && <TrendingDown size={12} className="text-red-400" />}
+                                    {trend === 'flat' && <Minus size={12} className="text-gray-500" />}
+                                    <span className={trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : 'text-gray-300'}>
+                                        {avg !== null ? avg.toFixed(1) : '—'}
+                                    </span>
+                                </div>
+                                <div className="text-[9px] text-gray-500 uppercase tracking-widest">Avg</div>
+                            </div>
+                        </Link>
+                    );
+                })}
             </div>
         </div>
     );
 };
+
+function ratingTone(v: number): string {
+    if (v >= 5) return 'bg-emerald-500/20 text-emerald-300 ring-emerald-500/30';
+    if (v >= 4) return 'bg-lime-500/20 text-lime-300 ring-lime-500/30';
+    if (v >= 3) return 'bg-amber-500/20 text-amber-300 ring-amber-500/30';
+    if (v >= 2) return 'bg-orange-500/20 text-orange-300 ring-orange-500/30';
+    return 'bg-red-500/20 text-red-300 ring-red-500/30';
+}
+
+function getTrend(values: number[]): 'up' | 'down' | 'flat' {
+    if (values.length < 2) return 'flat';
+    const first = values[0];
+    const last = values[values.length - 1];
+    if (last - first >= 0.5) return 'up';
+    if (first - last >= 0.5) return 'down';
+    return 'flat';
+}
 
 export const Dashboard = () => {
     const { user } = useAuth();
     const [insights, setInsights] = useState<TeamInsights | null>(null);
     const [injuries, setInjuries] = useState<any[]>([]);
     const [wbAlerts, setWbAlerts] = useState<any[]>([]);
+    const [players, setPlayers] = useState<Player[]>([]);
+    const [matrix, setMatrix] = useState<CoachGameRatingMatrix | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (user?.role === 'player') return;
         const fetchData = async () => {
             try {
-                const [ins, inj, wba] = await Promise.all([
+                const [ins, inj, wba, squad, m] = await Promise.all([
                     ApiService.getTeamInsights(),
                     ApiService.getInjuries(),
-                    ApiService.getWellbeingAlerts()
+                    ApiService.getWellbeingAlerts(),
+                    ApiService.getPlayers().catch(() => []),
+                    ApiService.getCoachGameRatingMatrix().catch(() => null),
                 ]);
                 setInsights(ins);
                 setInjuries(inj);
                 setWbAlerts(wba);
+                setPlayers(squad);
+                setMatrix(m);
             } catch (err) {
                 console.error("Failed to load dashboard data", err);
             } finally {
@@ -81,16 +172,6 @@ export const Dashboard = () => {
 
         fetchData();
     }, []);
-
-    // Prepare chart data from daily_averages
-    const chartData = insights?.daily_averages
-        ? Object.entries(insights.daily_averages).map(([date, vals]: any) => ({
-            date: date.split('-').slice(1).join('/'), // MM/DD
-            ...vals
-        })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        : [];
-
-    const latestStats = chartData.length > 0 ? chartData[chartData.length - 1] : { sleep: 0, soreness: 0, stress: 0 };
 
     if (user?.role === 'player') {
         return <Navigate to={`/players/${user.jumper_no}`} replace />;
@@ -114,36 +195,8 @@ export const Dashboard = () => {
                 </div>
             </div>
 
-            {/* KPI Cards section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard
-                    loading={loading}
-                    title="Avg Sleep Quality"
-                    value={latestStats.sleep}
-                    subtext="Squad Average"
-                    icon={Activity}
-                    trend={latestStats.sleep > 7.5 ? "up" : "down"}
-                    color="bg-indigo-600"
-                />
-                <StatCard
-                    loading={loading}
-                    title="Soreness Status"
-                    value={latestStats.soreness}
-                    subtext="Daily Trend"
-                    icon={AlertTriangle}
-                    trend={latestStats.soreness < 7 ? "down" : "up"}
-                    color="bg-amber-500"
-                />
-                <StatCard
-                    loading={loading}
-                    title="Squad Stress"
-                    value={latestStats.stress}
-                    subtext="Mental Load"
-                    icon={Users}
-                    trend="up"
-                    color="bg-emerald-600"
-                />
-            </div>
+            {/* Focus Watchlist — favourited players' recent form */}
+            <FocusWatchlist players={players} matrix={matrix} />
 
             {/* Squad Fitness Performance Row */}
             <div className="bg-hfc-brown rounded-[2.5rem] p-8 text-white border border-white/10 shadow-2xl overflow-hidden relative">

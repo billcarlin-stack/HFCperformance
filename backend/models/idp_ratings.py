@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 class IdpRating(Base):
     __tablename__ = 'idp_ratings'
+    __table_args__ = {'schema': 'coaching'}
 
     player_id = Column(Integer, primary_key=True)
     grit = Column(Float)

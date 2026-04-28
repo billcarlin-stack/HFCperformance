@@ -9,6 +9,7 @@ _config = get_config()
 
 class InjuryLog(Base):
     __tablename__ = 'injury_logs'
+    __table_args__ = {'schema': 'coaching'}
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     player_id = Column(Integer, nullable=False)

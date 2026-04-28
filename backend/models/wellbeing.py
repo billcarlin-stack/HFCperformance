@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 class WellbeingSurvey(Base):
     __tablename__ = 'wellbeing_surveys'
+    __table_args__ = {'schema': 'coaching'}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     player_id = Column(Integer, nullable=False)

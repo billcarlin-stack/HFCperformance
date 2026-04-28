@@ -13,10 +13,12 @@ def get_stats():
     Query param: jumper_no (optional)
     """
     jumper_no = request.args.get("jumper_no")
-    
+    league_id = request.args.get("league_id")
+
     try:
         jumper_no_int = int(jumper_no) if jumper_no else None
-        results = get_player_stats_2025(jumper_no_int)
+        league_id_int = int(league_id) if league_id else None
+        results = get_player_stats_2025(jumper_no_int, league_id_int)
         return jsonify(results), 200
     except Exception as e:
         logger.error(f"Error fetching stats: {e}")

@@ -12,6 +12,7 @@ from datetime import datetime
 
 class SavedSquad(Base):
     __tablename__ = 'saved_squads'
+    __table_args__ = {'schema': 'coaching'}
 
     id = Column(Integer, primary_key=True)
     round_id = Column(Integer)
@@ -38,6 +39,7 @@ class SavedSquad(Base):
 # Legacy table — kept for backwards compat with init scripts
 class TeamSelection(Base):
     __tablename__ = 'team_selections'
+    __table_args__ = {'schema': 'coaching'}
 
     position_id = Column(String(50), primary_key=True)
     player_id = Column(Integer)

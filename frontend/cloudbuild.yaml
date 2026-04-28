@@ -1,18 +1,12 @@
-availableSecrets:
-  secretManager:
-    - versionName: projects/$PROJECT_ID/secrets/firebase-api-key/versions/latest
-      env: 'VITE_FIREBASE_API_KEY'
-
 steps:
   # Build the Docker image with VITE_API_URL baked in at build time
   - name: 'gcr.io/cloud-builders/docker'
-    secretEnv: ['VITE_FIREBASE_API_KEY']
     args:
       - 'build'
       - '--build-arg'
       - 'VITE_API_URL=https://the-nest-api-114675580879.australia-southeast1.run.app/api'
       - '--build-arg'
-      - 'VITE_FIREBASE_API_KEY=$$VITE_FIREBASE_API_KEY'
+      - 'VITE_FIREBASE_API_KEY=AIzaSyAPT1TDq0ObzJmFxE8xhGdQv1gecvyipHQ'
       - '--build-arg'
       - 'VITE_FIREBASE_AUTH_DOMAIN=bill-sandpit.firebaseapp.com'
       - '--build-arg'

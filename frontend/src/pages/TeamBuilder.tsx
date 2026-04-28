@@ -1,10 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import type { Player, TeamPosition, SquadAggregates, TeamVersion, BoxHillPlayer } from '../services/api';
+import type { Player, TeamPosition, SquadAggregates, TeamVersion } from '../services/api';
 import { ApiService, formatPlayerImage } from '../services/api';
 import { useRounds } from '../hooks/useRounds';
 import { RoundSelector } from '../components/common/RoundSelector';
-import { PositionFilter, matchesPositionFilter } from '../components/common/PositionFilter';
-import type { PositionGroup } from '../components/common/PositionFilter';
 import {
     Search,
     MessageSquare,
@@ -57,6 +55,45 @@ const POSITION_COORDS: Record<string, {x: number, y: number}[]> = {
     'KF': [{x: 38, y: 86}, {x: 50, y: 88}, {x: 62, y: 86}],
 };
 
+// Exact team sheet positions — selected_position_id from Champion Data
+// Maps each spot on the AFL team sheet to a specific x,y on the oval
+const POSITION_ID_COORDS: Record<number, {x: number, y: number}> = {
+    // Back line (defenders at top of oval)
+    4141: {x: 30, y: 12},   // BP Left
+    4142: {x: 50, y: 10},   // FB Centre
+    4143: {x: 70, y: 12},   // BP Right
+    // Half back
+    4144: {x: 25, y: 24},   // HBF Left
+    4145: {x: 50, y: 22},   // CHB Centre
+    4146: {x: 75, y: 24},   // HBF Right
+    // Midfield
+    4147: {x: 15, y: 42},   // Wing Left
+    4148: {x: 50, y: 44},   // Centre/On Ball
+    4149: {x: 85, y: 42},   // Wing Right
+    // Half forward
+    4150: {x: 25, y: 60},   // HFF Left
+    4151: {x: 50, y: 58},   // CHF Centre
+    4152: {x: 75, y: 60},   // HFF Right
+    // Forward line
+    4153: {x: 32, y: 74},   // FP Left
+    4154: {x: 50, y: 76},   // FF Centre
+    4155: {x: 68, y: 74},   // FP Right
+    // Followers
+    4156: {x: 50, y: 50},   // Ruck
+    4157: {x: 38, y: 48},   // Rover / On Ball
+    4158: {x: 62, y: 48},   // Ruck Rover / On Ball
+    // Interchange (arc inside lower oval)
+    4159: {x: 28, y: 83},
+    4160: {x: 39, y: 85},
+    4161: {x: 50, y: 86},
+    4162: {x: 61, y: 85},
+    4163: {x: 72, y: 83},
+    // Emergency
+    4251: {x: 28, y: 83},
+    4252: {x: 50, y: 86},
+    4253: {x: 72, y: 83},
+};
+
 const OvalMarkings = () => (
     <div className="absolute inset-0 pointer-events-none opacity-[0.08]">
         <svg width="100%" height="100%" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
@@ -73,7 +110,7 @@ const OvalMarkings = () => (
 );
 
 const renderHistoryTokens = (
-    lineup: {player_id: string; jumper_no: number; position: string; played: boolean; name?: string; full_name?: string; time_on_secs?: number; time_on_pct?: number; rotations?: number; injured?: boolean; intervals?: Record<string, {on: number; off: number}[]>; started_on_field?: boolean; gps?: {distance_m?: number; hs_dist_m?: number; sprints?: number; player_load?: number; max_vel?: number; m_per_min?: number; hr_avg?: number; hr_max?: number; accels?: number; hmld?: number; field_min?: number}}[],
+    lineup: {player_id: string; jumper_no: number; position: string; position_id?: number; played: boolean; name?: string; full_name?: string; time_on_secs?: number; time_on_pct?: number; rotations?: number; injured?: boolean; intervals?: Record<string, {on: number; off: number}[]>; started_on_field?: boolean; gps?: {distance_m?: number; hs_dist_m?: number; sprints?: number; player_load?: number; max_vel?: number; m_per_min?: number; hr_avg?: number; hr_max?: number; accels?: number; hmld?: number; field_min?: number}}[],
     season: string,
     theme: 'hawks' | 'opponent',
     filter: 'starting' | 'full' | 'all' = 'full'
@@ -92,10 +129,16 @@ const renderHistoryTokens = (
     const fallbackColor = theme === 'hawks' ? 'C8A951' : 'ef4444';
 
     return played.map((p, i) => {
-        const count = positionCounts[p.position] || 0;
-        positionCounts[p.position] = count + 1;
-        const coords = POSITION_COORDS[p.position];
-        const coord = coords?.[count % coords.length] || {x: 50, y: 50};
+        // Use exact position_id coordinate if available, otherwise fall back to grouped
+        let coord: {x: number; y: number};
+        if (p.position_id && POSITION_ID_COORDS[p.position_id]) {
+            coord = POSITION_ID_COORDS[p.position_id];
+        } else {
+            const count = positionCounts[p.position] || 0;
+            positionCounts[p.position] = count + 1;
+            const coords = POSITION_COORDS[p.position];
+            coord = coords?.[count % coords.length] || {x: 50, y: 50};
+        }
 
         return (
             <div key={`${p.player_id}_${i}`} className="absolute flex flex-col items-center group hover:!z-[999]"
@@ -154,14 +197,39 @@ const renderHistoryTokens = (
     });
 };
 
+const BOX_HILL_ROSTER_FALLBACK = [
+  { jumper_no: 3,  name: 'Jai Newcombe',    position: 'Midfielder',  status: 'Green' },
+  { jumper_no: 25, name: 'Josh Ward',        position: 'Midfielder',  status: 'Green' },
+  { jumper_no: 28, name: 'Cam Mackenzie',    position: 'Mid/Fwd',    status: 'Green' },
+  { jumper_no: 33, name: 'Jack Ginnivan',    position: 'Forward',     status: 'Green' },
+  { jumper_no: 30, name: 'Sam Butler',       position: 'Forward',     status: 'Green' },
+  { jumper_no: 13, name: 'Calsher Dear',     position: 'Key Forward', status: 'Green' },
+  { jumper_no: 38, name: 'Max Ramsden',      position: 'Ruck/Fwd',   status: 'Green' },
+  { jumper_no: 7,  name: 'Ned Reeves',       position: 'Ruck',        status: 'Green' },
+  { jumper_no: 17, name: 'Lloyd Meek',       position: 'Ruck',        status: 'Green' },
+  { jumper_no: 21, name: 'Noah Mraz',        position: 'Ruck',        status: 'Green' },
+  { jumper_no: 29, name: 'Aidan Schubert',   position: 'Ruck',        status: 'Green' },
+  { jumper_no: 36, name: 'James Blanck',     position: 'Key Def',     status: 'Green' },
+  { jumper_no: 23, name: 'Josh Weddle',      position: 'Defender',    status: 'Green' },
+  { jumper_no: 14, name: 'Jack Scrimshaw',   position: 'Defender',    status: 'Green' },
+  { jumper_no: 22, name: 'Cam Nairn',        position: 'Defender',    status: 'Green' },
+  { jumper_no: 26, name: 'Bodie Ryan',       position: 'Defender',    status: 'Green' },
+  { jumper_no: 31, name: 'Matthew LeRay',    position: 'Def/Mid',     status: 'Green' },
+  { jumper_no: 35, name: 'Ollie Greeves',    position: 'Defender',    status: 'Green' },
+  { jumper_no: 34, name: 'Jack Dalton',      position: 'Defender',    status: 'Green' },
+  { jumper_no: 20, name: 'Finn Maginness',   position: 'Midfielder',  status: 'Green' },
+  { jumper_no: 32, name: 'Cody Anderson',    position: 'Midfielder',  status: 'Green' },
+  { jumper_no: 39, name: 'Flynn Perez',      position: 'Midfielder',  status: 'Green' },
+  { jumper_no: 41, name: 'Matt Hill',        position: 'Midfielder',  status: 'Green' },
+  { jumper_no: 42, name: 'Bailey Macdonald', position: 'Midfielder',  status: 'Green' },
+  { jumper_no: 44, name: 'Henry Hustwaite',  position: 'Midfielder',  status: 'Green' },
+];
+
 const TeamBuilder = () => {
     const [players, setPlayers] = useState<Player[]>([]);
-    const [boxHillPlayers, setBoxHillPlayers] = useState<BoxHillPlayer[]>([]);
-    const [sidebarPool, setSidebarPool] = useState<'hawks' | 'boxhill'>('hawks');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [posFilter, setPosFilter] = useState<PositionGroup>('ALL');
 
     // Version state
     const [versions, setVersions] = useState<TeamVersion[]>([]);
@@ -201,6 +269,13 @@ const TeamBuilder = () => {
     const [fieldDragOver, setFieldDragOver] = useState(false);
     const [oppRosterPlayers, setOppRosterPlayers] = useState<{name: string; jumper_no: number; position: string; photo_url: string}[]>([]);
     const [oppDragOver, setOppDragOver] = useState(false);
+
+    // VFL (Box Hill) oval state
+    const [showVflPanel, setShowVflPanel] = useState(false);
+    const [boxHillPlayers] = useState<any[]>(BOX_HILL_ROSTER_FALLBACK);
+    const [vflDragOver, setVflDragOver] = useState(false);
+    const [, setDraggingVflPlayer] = useState<number | null>(null);
+    const vflFieldRef = useRef<HTMLDivElement>(null);
 
     // Opponent history state
     const [oppHistoryGames, setOppHistoryGames] = useState<any[]>([]);
@@ -259,21 +334,10 @@ const TeamBuilder = () => {
     const handleFieldDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setFieldDragOver(false);
-        const raw = e.dataTransfer.getData('text/plain');
-        if (!raw || !fieldRef.current) return;
-
-        // Box Hill players are prefixed with 'bh_'; store as negative IDs to distinguish from Hawks
-        let playerId: number;
-        if (raw.startsWith('bh_')) {
-            playerId = -parseInt(raw.slice(3), 10);
-        } else {
-            playerId = parseInt(raw, 10);
-        }
-        if (isNaN(playerId)) return;
-
-        // Prevent duplicates
+        const playerId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        if (isNaN(playerId) || !fieldRef.current) return;
+        // Check if player is already on the field or bench
         if (fieldState.some(s => s.player_id === playerId)) return;
-
         const rect = fieldRef.current.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -288,15 +352,6 @@ const TeamBuilder = () => {
         const newState = [...fieldState, newEntry];
         autoSave(newState);
     };
-
-    // Load Box Hill players when pool is switched to 'boxhill'
-    useEffect(() => {
-        if (sidebarPool === 'boxhill' && boxHillPlayers.length === 0) {
-            ApiService.getBoxHillPlayers()
-                .then(setBoxHillPlayers)
-                .catch(err => console.error('Failed to load Box Hill players:', err));
-        }
-    }, [sidebarPool]);
 
     // Load players once on mount
     useEffect(() => {
@@ -362,23 +417,22 @@ const TeamBuilder = () => {
         loadVersions();
     }, [selectedRound]);
 
-    // Fetch aggregates when field state changes
+    // Fetch aggregates only when the SET of assigned players changes — not every
+    // position move. Deduped and sorted so intermediate drag states and pure
+    // reordering don't retrigger the API call (which was causing the totals to flicker).
+    const assignedIdsKey = useMemo(() => (
+        [...new Set(fieldState.filter(s => s.player_id).map(s => Number(s.player_id)))]
+            .sort((a, b) => a - b)
+            .join(',')
+    ), [fieldState]);
+
     useEffect(() => {
-        const fetchAggs = async () => {
-            const assignedIds = fieldState.filter(s => s.player_id).map(s => Number(s.player_id));
-            if (assignedIds.length > 0) {
-                try {
-                    const data = await ApiService.getSquadAggregates(assignedIds);
-                    setAggregates(data);
-                } catch (e) {
-                    console.error("Failed to fetch agg", e);
-                }
-            } else {
-                setAggregates(null);
-            }
-        };
-        fetchAggs();
-    }, [fieldState]);
+        if (!assignedIdsKey) { setAggregates(null); return; }
+        const ids = assignedIdsKey.split(',').map(Number);
+        ApiService.getSquadAggregates(ids)
+            .then(setAggregates)
+            .catch(e => console.error("Failed to fetch agg", e));
+    }, [assignedIdsKey]);
 
     const handleSelectPlayer = (positionId: string, playerId: number | null, notes: string = "", rotColor?: string, rotMins?: number) => {
         const newState = [...fieldState];
@@ -566,32 +620,25 @@ const TeamBuilder = () => {
         return players.find(p => p.jumper_no == sel.player_id);
     };
 
-    // Hawks players: positive player_id. Box Hill players: negative player_id (e.g. -50 for #50).
     const isPlayerAssigned = (jumperNo: number, isBoxHill = false) => {
-        const stored = isBoxHill ? -jumperNo : jumperNo;
-        return fieldState.some(s => s.player_id != null && Number(s.player_id) === stored);
+        if (isBoxHill) {
+            return fieldState.some(s => s.position_id === `vfl_${jumperNo}`);
+        }
+        return fieldState.some(s =>
+            s.player_id != null &&
+            Number(s.player_id) === Number(jumperNo) &&
+            !s.position_id.startsWith('opp_')
+        );
     };
 
     const filteredPlayers = useMemo(() => {
-        if (sidebarPool === 'boxhill') {
-            return boxHillPlayers.filter(p => {
-                const q = searchTerm.toLowerCase();
-                return (
-                    p.name.toLowerCase().includes(q) ||
-                    p.jumper_no.toString().includes(searchTerm) ||
-                    (p.community_club || '').toLowerCase().includes(q)
-                );
-            });
-        }
         if (!players) return [];
-        return players.filter(p => {
-            const matchesSearch =
-                p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.jumper_no.toString().includes(searchTerm) ||
-                (p.position || '').toLowerCase().includes(searchTerm.toLowerCase());
-            return matchesSearch && matchesPositionFilter(p.position, posFilter);
-        });
-    }, [players, boxHillPlayers, sidebarPool, searchTerm, posFilter]);
+        return players.filter(p =>
+            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.jumper_no.toString().includes(searchTerm) ||
+            (p.position || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [players, searchTerm]);
 
     const coachNotes = fieldState.find(s => s.position_id === 'COACH_NOTES')?.notes || '';
 
@@ -666,7 +713,7 @@ const TeamBuilder = () => {
                             onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}&background=4D2004&color=F6B000&size=80&length=2`; }}
                         />
                         <div className="text-[10px] font-black text-white uppercase tracking-tight text-center px-2 leading-tight line-clamp-1">
-                            {player.name.split(' ').slice(-1)[0]}
+                            {player.name?.split(' ').slice(-1)[0] || `#${player.jumper_no}`}
                         </div>
                         <div className="flex items-center gap-1 text-[8px] font-bold">
                             <span className="text-amber-200/50">#{player.jumper_no}</span>
@@ -708,9 +755,9 @@ const TeamBuilder = () => {
         </div>
     );
 
-    const fieldPlayers = fieldState.filter(s => s.x != null && s.y != null && s.player_id != null && !s.position_id.startsWith('opp_'));
+    const fieldPlayers = fieldState.filter(s => s.x != null && s.y != null && s.player_id != null && !s.position_id.startsWith('opp_') && !s.position_id.startsWith('vfl_'));
     const oppPlayers = fieldState.filter(s => s.x != null && s.y != null && s.position_id.startsWith('opp_'));
-    const assignedCount = fieldState.filter(s => s.player_id != null && s.position_id !== 'COACH_NOTES' && !s.position_id.startsWith('opp_')).length;
+    const assignedCount = fieldState.filter(s => s.player_id != null && s.position_id !== 'COACH_NOTES' && !s.position_id.startsWith('opp_') && !s.position_id.startsWith('vfl_')).length;
 
     // Opponent field handlers
     const handleOppMouseDown = (e: React.MouseEvent, positionId: string) => {
@@ -766,6 +813,43 @@ const TeamBuilder = () => {
     };
 
     const isOppOnField = (jumperNo: number) => fieldState.some(s => s.position_id === `opp_${jumperNo}`);
+
+    const handleVflFieldDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setVflDragOver(false);
+        const data = e.dataTransfer.getData('text/plain');
+        if (!vflFieldRef.current) return;
+
+        // Source of the drag: 'vfl_<n>' is either a Box-Hill-pool drag or an
+        // on-field VFL token being repositioned. Plain jumper number = Hawks pool loanee.
+        const isFromVfl = data.startsWith('vfl_');
+        const jumperNo = parseInt(isFromVfl ? data.replace('vfl_', '') : data, 10);
+        if (isNaN(jumperNo)) return;
+
+        // Prefer Box Hill roster lookup; fall back to Hawks roster for loanees.
+        const player = boxHillPlayers.find((p: any) => p.jumper_no === jumperNo)
+                    || players.find((p: any) => p.jumper_no === jumperNo);
+        if (!player) return;
+
+        const rect = vflFieldRef.current.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        const newPos: TeamPosition = {
+            position_id: `vfl_${jumperNo}`,
+            player_id: jumperNo,
+            x: Math.max(2, Math.min(98, x)),
+            y: Math.max(2, Math.min(98, y)),
+            label: player.name?.split(' ').pop() || '',
+            notes: '',
+        };
+
+        // Remove any existing entry for this jumper on the VFL oval, then add at new spot.
+        // Handles both first-drop and reposition cases uniformly.
+        const filtered = fieldState.filter(s => s.position_id !== `vfl_${jumperNo}`);
+        autoSave([...filtered, newPos]);
+        setDraggingVflPlayer(null);
+    };
 
     return (
         <div className="p-6 max-w-[1700px] mx-auto space-y-6">
@@ -1009,142 +1093,62 @@ const TeamBuilder = () => {
                     </>
                 ) : (
                     <>
-                    {/* Player Pool sidebar (left column) — Hawks or Box Hill */}
-                    <div className={clsx(
-                        "w-[200px] shrink-0 rounded-2xl border overflow-hidden flex flex-col",
-                        sidebarPool === 'boxhill'
-                            ? "bg-[#062020]/80 border-teal-500/20"
-                            : "bg-[#0d2040]/80 border-white/10"
-                    )}>
-                        {/* Pool toggle */}
-                        <div className={clsx("p-1.5 flex gap-1", sidebarPool === 'boxhill' ? "border-b border-teal-500/20" : "border-b border-white/10")}>
-                            {[
-                                { key: 'hawks', label: 'Hawks', color: 'bg-hfc-brown text-white' },
-                                { key: 'boxhill', label: 'Box Hill', color: 'bg-teal-700 text-teal-100' },
-                            ].map(opt => (
-                                <button
-                                    key={opt.key}
-                                    onClick={() => { setSidebarPool(opt.key as 'hawks' | 'boxhill'); setSearchTerm(''); }}
-                                    className={clsx(
-                                        "flex-1 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all",
-                                        sidebarPool === opt.key ? opt.color : "text-white/30 hover:text-white/60"
-                                    )}
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className={clsx("p-2", sidebarPool === 'boxhill' ? "border-b border-teal-500/10" : "border-b border-white/10")}>
+                    {/* Hawks Player Pool (left column) */}
+                    <div className="w-[200px] shrink-0 bg-[#0d2040]/80 rounded-2xl border border-white/10 overflow-hidden flex flex-col">
+                        <div className="p-2 border-b border-white/10">
                             <div className="flex items-center justify-between mb-1.5">
-                                {sidebarPool === 'boxhill' ? (
-                                    <>
-                                        <span className="text-[9px] font-black text-teal-300 uppercase tracking-widest">VFL Listed</span>
-                                        <span className="text-[7px] text-teal-400/40 uppercase">Cannot play AFL</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="text-[9px] font-black text-amber-300 uppercase tracking-widest">AFL Listed</span>
-                                        <span className="text-[8px] font-bold text-white/30">
-                                            {players.filter(p => !isPlayerAssigned(p.jumper_no, false)).length}
-                                        </span>
-                                    </>
-                                )}
+                                <h3 className="text-[9px] font-black text-amber-300 uppercase tracking-widest">Hawks Squad</h3>
+                                <span className="text-[8px] font-bold text-white/30">
+                                    {players.filter(p => !isPlayerAssigned(p.jumper_no)).length}
+                                </span>
                             </div>
                             <div className="relative">
                                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-white/30" size={12} />
                                 <input
                                     type="text"
-                                    placeholder={sidebarPool === 'boxhill' ? 'Search BH...' : 'Search...'}
+                                    placeholder="Search..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className={clsx(
-                                        "w-full bg-white/5 border rounded-lg py-1.5 pl-7 pr-2 text-[10px] text-white placeholder-white/30 focus:outline-none",
-                                        sidebarPool === 'boxhill'
-                                            ? "border-teal-500/20 focus:border-teal-400/50"
-                                            : "border-white/10 focus:border-amber-400/50"
-                                    )}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-1.5 pl-7 pr-2 text-[10px] text-white placeholder-white/30 focus:outline-none focus:border-amber-400/50"
                                 />
                             </div>
-                            {sidebarPool === 'hawks' && (
-                                <div className="mt-1.5">
-                                    <PositionFilter value={posFilter} onChange={setPosFilter} compact />
-                                </div>
-                            )}
                         </div>
-
                         <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
                             <div className="space-y-1.5">
-                                {sidebarPool === 'boxhill' ? (
-                                    // ── Box Hill player cards ──
-                                    (filteredPlayers as BoxHillPlayer[]).map(p => {
-                                        const assigned = isPlayerAssigned(p.jumper_no, true);
-                                        return (
-                                            <div
-                                                key={p.jumper_no}
-                                                draggable={!assigned}
-                                                onDragStart={(e) => {
-                                                    e.dataTransfer.setData('text/plain', `bh_${p.jumper_no}`);
-                                                    e.dataTransfer.effectAllowed = 'move';
-                                                }}
-                                                className={clsx(
-                                                    "flex items-center gap-2 p-1.5 rounded-lg border transition-colors",
-                                                    assigned
-                                                        ? "bg-teal-400/10 border-teal-400/20 opacity-50"
-                                                        : "bg-teal-900/20 border-teal-500/10 hover:border-teal-400/40 cursor-grab"
-                                                )}
-                                            >
-                                                {/* Initials avatar for Box Hill (no photos yet) */}
-                                                <div className="h-8 w-8 rounded-full shrink-0 pointer-events-none bg-teal-800 border border-teal-400/30 flex items-center justify-center text-[9px] font-black text-teal-200">
-                                                    {p.name.split(' ').map(w => w[0]).join('').substring(0, 2)}
-                                                </div>
-                                                <div className="min-w-0 pointer-events-none flex-1">
-                                                    <div className="text-[9px] font-black text-teal-100 truncate">{p.name.split(' ').slice(-1)[0]}</div>
-                                                    <div className="text-[7px] text-teal-400/60">#{p.jumper_no}{p.leadership_role ? ` · ${p.leadership_role.replace('Leadership Group', 'LG').replace('Vice-Captain', 'VC').replace('Captain', 'C')}` : ''}</div>
-                                                </div>
-                                                {assigned && (
-                                                    <div className="ml-auto shrink-0 h-2.5 w-2.5 rounded-full bg-teal-400/60 pointer-events-none" />
-                                                )}
+                                {filteredPlayers.map(p => {
+                                    const assigned = isPlayerAssigned(p.jumper_no);
+                                    return (
+                                        <div
+                                            key={p.jumper_no}
+                                            draggable={!assigned}
+                                            onDragStart={(e) => {
+                                                e.dataTransfer.setData('text/plain', String(p.jumper_no));
+                                                e.dataTransfer.effectAllowed = 'move';
+                                            }}
+                                            className={clsx(
+                                                "flex items-center gap-2 p-1.5 rounded-lg border transition-colors",
+                                                assigned
+                                                    ? "bg-amber-400/10 border-amber-400/20 opacity-50"
+                                                    : "bg-white/[0.03] border-white/5 hover:border-amber-400/40 cursor-grab"
+                                            )}
+                                        >
+                                            <img
+                                                src={formatPlayerImage(p.jumper_no, p.photo_url, p.name)}
+                                                className="h-8 w-8 rounded-full object-cover shrink-0 pointer-events-none border border-amber-400/20"
+                                                draggable={false}
+                                                alt={p.name}
+                                                onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=4D2004&color=F6B000&size=80&length=2`; }}
+                                            />
+                                            <div className="min-w-0 pointer-events-none">
+                                                <div className="text-[9px] font-black text-white truncate">{p.name?.split(' ').slice(-1)[0] || `#${p.jumper_no}`}</div>
+                                                <div className="text-[7px] text-amber-300/60">#{p.jumper_no} · {p.position}</div>
                                             </div>
-                                        );
-                                    })
-                                ) : (
-                                    // ── Hawks player cards ──
-                                    (filteredPlayers as Player[]).map(p => {
-                                        const assigned = isPlayerAssigned(p.jumper_no, false);
-                                        return (
-                                            <div
-                                                key={p.jumper_no}
-                                                draggable={!assigned}
-                                                onDragStart={(e) => {
-                                                    e.dataTransfer.setData('text/plain', String(p.jumper_no));
-                                                    e.dataTransfer.effectAllowed = 'move';
-                                                }}
-                                                className={clsx(
-                                                    "flex items-center gap-2 p-1.5 rounded-lg border transition-colors",
-                                                    assigned
-                                                        ? "bg-amber-400/10 border-amber-400/20 opacity-50"
-                                                        : "bg-white/[0.03] border-white/5 hover:border-amber-400/40 cursor-grab"
-                                                )}
-                                            >
-                                                <img
-                                                    src={formatPlayerImage(p.jumper_no, p.photo_url, p.name)}
-                                                    className="h-8 w-8 rounded-full object-cover shrink-0 pointer-events-none border border-amber-400/20"
-                                                    draggable={false}
-                                                    alt={p.name}
-                                                    onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=4D2004&color=F6B000&size=80&length=2`; }}
-                                                />
-                                                <div className="min-w-0 pointer-events-none">
-                                                    <div className="text-[9px] font-black text-white truncate">{p.name.split(' ').slice(-1)[0]}</div>
-                                                    <div className="text-[7px] text-amber-300/60">#{p.jumper_no} · {p.position}</div>
-                                                </div>
-                                                {assigned && (
-                                                    <div className="ml-auto shrink-0 h-2.5 w-2.5 rounded-full bg-amber-400/60 pointer-events-none" />
-                                                )}
-                                            </div>
-                                        );
-                                    })
-                                )}
+                                            {assigned && (
+                                                <div className="ml-auto shrink-0 h-2.5 w-2.5 rounded-full bg-amber-400/60 pointer-events-none" />
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -1214,14 +1218,7 @@ const TeamBuilder = () => {
 
                         {/* On-field player tokens */}
                         {fieldPlayers.map(pos => {
-                            // Negative player_id = Box Hill player
-                            const isBoxHill = (pos.player_id ?? 0) < 0;
-                            const player = isBoxHill
-                                ? (() => {
-                                    const bh = boxHillPlayers.find(p => p.jumper_no === Math.abs(pos.player_id!));
-                                    return bh ? { ...bh, position: bh.position || '—', readiness: undefined } as any : null;
-                                  })()
-                                : players.find(p => p.jumper_no === pos.player_id);
+                            const player = players.find(p => p.jumper_no === pos.player_id);
                             if (!player) return null;
                             const isBeingDragged = draggingFieldPlayer === pos.position_id;
                             const isRotSelected = selectedForRotation.includes(pos.position_id);
@@ -1251,11 +1248,11 @@ const TeamBuilder = () => {
                                         handleFieldMouseDown(e, pos.position_id);
                                     }}
                                 >
-                                    {/* Rotation color ring — teal for Box Hill players */}
+                                    {/* Rotation color ring */}
                                     <div
                                         className={clsx(
                                             "relative w-10 h-10 rounded-full border-2 overflow-hidden",
-                                            pos.rotation_color ? "" : isBoxHill ? "border-teal-400/60" : "border-amber-400/40"
+                                            pos.rotation_color ? "" : "border-amber-400/40"
                                         )}
                                         style={pos.rotation_color ? { borderColor: pos.rotation_color } : {}}
                                     >
@@ -1280,19 +1277,13 @@ const TeamBuilder = () => {
                                             {pos.rotation_minutes}m
                                         </div>
                                     )}
-                                    <div className={clsx(
-                                        "text-[9px] font-black text-center mt-0.5 leading-tight drop-shadow-lg",
-                                        isBoxHill ? "text-teal-200" : "text-white"
-                                    )}>
-                                        {player.name.split(' ').slice(-1)[0]}
+                                    <div className="text-[9px] font-black text-white text-center mt-0.5 leading-tight drop-shadow-lg">
+                                        {player.name?.split(' ').slice(-1)[0] || `#${player.jumper_no}`}
                                     </div>
-                                    <div className={clsx("text-[7px] font-bold", isBoxHill ? "text-teal-400/70" : "text-amber-300/60")}>
-                                        #{Math.abs(pos.player_id!)}
-                                        {isBoxHill && <span className="ml-0.5 text-teal-400/50">VFL</span>}
-                                    </div>
+                                    <div className="text-[7px] font-bold text-amber-300/60">#{player.jumper_no}</div>
                                     {/* Label if set */}
                                     {pos.label && (
-                                        <div className={clsx("text-[7px] font-black uppercase tracking-wider", isBoxHill ? "text-teal-400/80" : "text-amber-400/80")}>{pos.label}</div>
+                                        <div className="text-[7px] font-black text-amber-400/80 uppercase tracking-wider">{pos.label}</div>
                                     )}
                                     {/* Remove button */}
                                     {!rotationMode && (
@@ -1313,8 +1304,8 @@ const TeamBuilder = () => {
                         })}
                     </div>
 
-                    {/* Opposition Oval — current (editable) view only */}
-                    {selectedRound?.opponent && oppRosterPlayers.length > 0 && (
+                    {/* 4th column — Opposition Oval OR Box Hill VFL Oval (toggle in right sidebar) */}
+                    {selectedRound?.opponent && oppRosterPlayers.length > 0 && !showVflPanel && (
                         <div
                             ref={oppFieldRef}
                             className={clsx(
@@ -1391,57 +1382,184 @@ const TeamBuilder = () => {
                         </div>
                     )}
 
+                    {/* Box Hill VFL Oval — replaces the opposition oval when toggle is active */}
+                    {selectedRound?.opponent && oppRosterPlayers.length > 0 && showVflPanel && (
+                        <div
+                            ref={vflFieldRef}
+                            className={clsx(
+                                "flex-1 min-w-[280px] relative bg-gradient-to-b from-[#2a1f04] to-[#1a1003] rounded-[2.5rem] border shadow-2xl overflow-hidden select-none",
+                                vflDragOver ? "border-yellow-400/60" : "border-yellow-600/30"
+                            )}
+                            onDragOver={(e) => { e.preventDefault(); setVflDragOver(true); }}
+                            onDragLeave={() => setVflDragOver(false)}
+                            onDrop={handleVflFieldDrop}
+                        >
+                            <OvalMarkings />
+
+                            <div className="absolute top-4 left-0 right-0 text-center text-[9px] font-black text-yellow-400/30 uppercase tracking-[0.3em] pointer-events-none">Box Hill VFL</div>
+                            <div className="absolute bottom-4 left-0 right-0 text-center text-[9px] font-black text-yellow-400/20 uppercase tracking-[0.3em] pointer-events-none">Attacking End</div>
+
+                            {fieldState.filter(s => s.position_id.startsWith('vfl_')).length === 0 && !vflDragOver && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="text-yellow-400/15 text-sm font-black uppercase tracking-[0.3em]">Drag Box Hill players here</div>
+                                </div>
+                            )}
+                            {vflDragOver && (
+                                <div className="absolute inset-0 bg-yellow-400/5 pointer-events-none z-0" />
+                            )}
+
+                            {/* On-field VFL tokens */}
+                            {fieldState.filter(s => s.position_id.startsWith('vfl_')).map(pos => {
+                                const jumperNo = parseInt(pos.position_id.replace('vfl_', ''), 10);
+                                const p = players.find((pl: any) => pl.jumper_no === jumperNo)
+                                       || boxHillPlayers.find((pl: any) => pl.jumper_no === jumperNo);
+                                return (
+                                    <div
+                                        key={pos.position_id}
+                                        draggable
+                                        onDragStart={(e) => {
+                                            e.dataTransfer.setData('text/plain', `vfl_${jumperNo}`);
+                                            setDraggingVflPlayer(jumperNo);
+                                        }}
+                                        onDragEnd={() => setDraggingVflPlayer(null)}
+                                        className="absolute flex flex-col items-center select-none cursor-grab group"
+                                        style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -50%)', zIndex: 10 }}
+                                    >
+                                        <div className="w-10 h-10 rounded-full border-2 border-yellow-400/60 overflow-hidden bg-yellow-500/20 flex items-center justify-center">
+                                            <span className="text-[11px] font-black text-yellow-200">#{jumperNo}</span>
+                                        </div>
+                                        <div className="text-[8px] font-black text-yellow-300 text-center mt-0.5 leading-tight drop-shadow-lg max-w-[65px] truncate">
+                                            {p?.name?.split(' ').pop() || pos.label}
+                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                autoSave(fieldState.filter(s => s.position_id !== pos.position_id));
+                                            }}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-yellow-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[8px] font-black"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
                     {/* Opposition Player Pool (conditional, right column) — only in Current view */}
                     {selectedRound?.opponent && oppRosterPlayers.length > 0 && oppViewTab === 'current' && (
                         <div className="w-[200px] shrink-0 bg-[#1a0808]/60 rounded-2xl border border-red-500/10 overflow-hidden flex flex-col">
                             <div className="p-2 border-b border-red-500/10">
-                                <h3 className="text-[9px] font-black text-red-400 uppercase tracking-widest">{selectedRound.opponent}</h3>
-                                <span className="text-[7px] text-gray-500">
-                                    {selectedRound.venue} ({selectedRound.is_home ? 'Home' : 'Away'})
-                                </span>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
-                                <div className="space-y-1.5">
-                                    {oppRosterPlayers.map(p => {
-                                        const onField = isOppOnField(p.jumper_no);
-                                        return (
-                                            <div
-                                                key={p.jumper_no}
-                                                draggable={!onField}
-                                                onDragStart={(e) => {
-                                                    e.dataTransfer.setData('text/plain', `opp_${p.jumper_no}`);
-                                                    e.dataTransfer.effectAllowed = 'move';
-                                                }}
-                                                className={clsx(
-                                                    "flex items-center gap-2 p-1.5 rounded-lg border transition-colors",
-                                                    onField
-                                                        ? "bg-red-500/10 border-red-500/20 opacity-50"
-                                                        : "bg-[#1a0808] border-white/5 hover:border-red-400/40 cursor-grab"
-                                                )}
-                                            >
-                                                <div className="relative shrink-0 pointer-events-none">
-                                                    <img
-                                                        src={p.photo_url}
-                                                        alt={p.name}
-                                                        draggable={false}
-                                                        className="h-8 w-8 rounded-full object-cover border border-red-500/30"
-                                                        onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=4a0e0e&color=ef4444&size=80&length=2`; }}
-                                                    />
-                                                    {onField && (
-                                                        <div className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 flex items-center justify-center">
-                                                            <span className="text-[6px] text-white font-black">✓</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0 pointer-events-none">
-                                                    <div className="text-[9px] font-black text-red-300 truncate">{p.name.split(' ').slice(-1)[0]}</div>
-                                                    <div className="text-[7px] text-red-400/50">#{p.jumper_no}</div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                {/* VFL / Opposition toggle */}
+                                <div className="flex gap-1 mb-2">
+                                    <button
+                                        onClick={() => setShowVflPanel(false)}
+                                        className={clsx(
+                                            "flex-1 py-1 text-xs font-bold rounded-lg transition-all",
+                                            !showVflPanel ? "bg-red-900/60 text-red-300 border border-red-700/50" : "text-gray-500 hover:text-gray-300"
+                                        )}
+                                    >
+                                        Opposition
+                                    </button>
+                                    <button
+                                        onClick={() => setShowVflPanel(true)}
+                                        className={clsx(
+                                            "flex-1 py-1 text-xs font-bold rounded-lg transition-all",
+                                            showVflPanel ? "bg-yellow-900/60 text-yellow-300 border border-yellow-700/50" : "text-gray-500 hover:text-gray-300"
+                                        )}
+                                    >
+                                        Box Hill (VFL)
+                                    </button>
                                 </div>
+                                {!showVflPanel && (
+                                    <>
+                                        <h3 className="text-[9px] font-black text-red-400 uppercase tracking-widest">{selectedRound.opponent}</h3>
+                                        <span className="text-[7px] text-gray-500">
+                                            {selectedRound.venue} ({selectedRound.is_home ? 'Home' : 'Away'})
+                                        </span>
+                                    </>
+                                )}
                             </div>
+                            {!showVflPanel && (
+                                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                                    <div className="space-y-1.5">
+                                        {oppRosterPlayers.map(p => {
+                                            const onField = isOppOnField(p.jumper_no);
+                                            return (
+                                                <div
+                                                    key={p.jumper_no}
+                                                    draggable={!onField}
+                                                    onDragStart={(e) => {
+                                                        e.dataTransfer.setData('text/plain', `opp_${p.jumper_no}`);
+                                                        e.dataTransfer.effectAllowed = 'move';
+                                                    }}
+                                                    className={clsx(
+                                                        "flex items-center gap-2 p-1.5 rounded-lg border transition-colors",
+                                                        onField
+                                                            ? "bg-red-500/10 border-red-500/20 opacity-50"
+                                                            : "bg-[#1a0808] border-white/5 hover:border-red-400/40 cursor-grab"
+                                                    )}
+                                                >
+                                                    <div className="relative shrink-0 pointer-events-none">
+                                                        <img
+                                                            src={p.photo_url}
+                                                            alt={p.name}
+                                                            draggable={false}
+                                                            className="h-8 w-8 rounded-full object-cover border border-red-500/30"
+                                                            onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=4a0e0e&color=ef4444&size=80&length=2`; }}
+                                                        />
+                                                        {onField && (
+                                                            <div className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 flex items-center justify-center">
+                                                                <span className="text-[6px] text-white font-black">✓</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0 pointer-events-none">
+                                                        <div className="text-[9px] font-black text-red-300 truncate">{p.name?.split(' ').slice(-1)[0] || `#${p.jumper_no}`}</div>
+                                                        <div className="text-[7px] text-red-400/50">#{p.jumper_no}</div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                            {showVflPanel && (
+                                <div className="flex flex-col h-full p-2">
+                                    <p className="text-[10px] text-yellow-600/60 uppercase tracking-widest font-bold mb-1">Box Hill Squad</p>
+                                    <div className="overflow-y-auto flex-1 space-y-1">
+                                        {boxHillPlayers.map((p: any) => {
+                                            const assigned = isPlayerAssigned(p.jumper_no, true);
+                                            return (
+                                                <div
+                                                    key={p.jumper_no}
+                                                    draggable={!assigned}
+                                                    onDragStart={e => {
+                                                        e.dataTransfer.setData('text/plain', `vfl_${p.jumper_no}`);
+                                                        setDraggingVflPlayer(p.jumper_no);
+                                                    }}
+                                                    onDragEnd={() => setDraggingVflPlayer(null)}
+                                                    className={clsx(
+                                                        "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-all",
+                                                        assigned
+                                                            ? "opacity-30 cursor-not-allowed bg-yellow-900/10"
+                                                            : "cursor-grab hover:bg-yellow-900/30 bg-yellow-900/20"
+                                                    )}
+                                                >
+                                                    <span className="w-5 h-5 rounded-full bg-yellow-500/20 border border-yellow-400/40 flex items-center justify-center text-[8px] font-black text-yellow-300 flex-shrink-0">
+                                                        {p.jumper_no}
+                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-semibold text-yellow-100 truncate text-[11px]">{p.name}</p>
+                                                        <p className="text-yellow-600/60 text-[9px]">{p.position}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                     </>

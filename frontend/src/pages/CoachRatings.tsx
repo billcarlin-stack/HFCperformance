@@ -6,8 +6,8 @@
 
 import { useEffect, useState } from 'react';
 import { ApiService, formatPlayerImage } from '../services/api';
-import type { Player } from '../services/api';
-import { Save, User } from 'lucide-react';
+import type { Player, IdpAssessmentPeriod } from '../services/api';
+import { Save, User, Plus, X } from 'lucide-react';
 import { useRounds } from '../hooks/useRounds';
 import { RoundSelector } from '../components/common/RoundSelector';
 
@@ -51,9 +51,35 @@ export const CoachRatings = () => {
     const [loading, setLoading] = useState(true);
     const { seasons, selectedSeason, setSelectedSeason, rounds, selectedRound, setSelectedRound } = useRounds();
 
+    // Assessment period state
+    const [periods, setPeriods] = useState<IdpAssessmentPeriod[]>([]);
+    const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
+    const [showNewPeriod, setShowNewPeriod] = useState(false);
+    const [newPeriodName, setNewPeriodName] = useState('');
+    const [creatingPeriod, setCreatingPeriod] = useState(false);
+
     useEffect(() => {
         ApiService.getPlayers().then(setPlayers).finally(() => setLoading(false));
+        ApiService.getIdpPeriods().then(setPeriods).catch(() => {});
     }, []);
+
+    const handleCreatePeriod = async () => {
+        if (!newPeriodName.trim()) return;
+        setCreatingPeriod(true);
+        try {
+            const created = await ApiService.createIdpPeriod(newPeriodName.trim());
+            const updated = await ApiService.getIdpPeriods();
+            setPeriods(updated);
+            setSelectedPeriodId(created.id);
+            setNewPeriodName('');
+            setShowNewPeriod(false);
+        } catch (err) {
+            console.error('Failed to create period', err);
+            alert('Error creating assessment period.');
+        } finally {
+            setCreatingPeriod(false);
+        }
+    };
 
     const handleRatingChange = (category: string, skill: string, value: number) => {
         setRatings(prev => ({ ...prev, [`${category}_${skill}`]: value }));
@@ -83,6 +109,7 @@ export const CoachRatings = () => {
                 rating_value: value,
                 notes: note,
                 round_id: selectedRound?.id,
+                assessment_period_id: selectedPeriodId,
             }));
         }
 
@@ -103,6 +130,71 @@ export const CoachRatings = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto">
+
+            {/* ── Assessment Period Selector Bar ── */}
+            <div className="bg-hawks-card border border-white/5 rounded-2xl p-4">
+                <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-[10px] uppercase tracking-widest text-amber-300/70 font-bold whitespace-nowrap">Assessment Period</span>
+
+                    {/* Period pills */}
+                    <button
+                        onClick={() => setSelectedPeriodId(null)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${selectedPeriodId === null ? 'bg-hawks-gold text-black border-hawks-gold' : 'border-white/10 text-gray-400 hover:border-hawks-gold/40 hover:text-gray-200'}`}
+                    >
+                        Latest (no period)
+                    </button>
+
+                    {periods.map(p => (
+                        <button
+                            key={p.id}
+                            onClick={() => setSelectedPeriodId(p.id)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${selectedPeriodId === p.id ? 'bg-hawks-gold text-black border-hawks-gold' : 'border-white/10 text-gray-400 hover:border-hawks-gold/40 hover:text-gray-200'}`}
+                        >
+                            {p.name}
+                            {!p.is_active && <span className="ml-1 text-[9px] opacity-50">(closed)</span>}
+                        </button>
+                    ))}
+
+                    {/* New period button / inline form */}
+                    {!showNewPeriod ? (
+                        <button
+                            onClick={() => setShowNewPeriod(true)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-dashed border-white/20 text-gray-500 hover:border-hawks-gold/60 hover:text-hawks-gold transition-all"
+                        >
+                            <Plus size={13} />
+                            New Period
+                        </button>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                autoFocus
+                                placeholder="e.g. Round 5 2026 Assessment"
+                                value={newPeriodName}
+                                onChange={e => setNewPeriodName(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') handleCreatePeriod(); if (e.key === 'Escape') { setShowNewPeriod(false); setNewPeriodName(''); } }}
+                                className="px-3 py-1.5 rounded-xl text-xs bg-hawks-base border border-white/20 text-gray-100 focus:outline-none focus:border-hawks-gold/60 w-64 placeholder-gray-600"
+                            />
+                            <button
+                                onClick={handleCreatePeriod}
+                                disabled={creatingPeriod || !newPeriodName.trim()}
+                                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-hawks-gold text-black disabled:opacity-50"
+                            >
+                                {creatingPeriod ? 'Creating...' : 'Create'}
+                            </button>
+                            <button onClick={() => { setShowNewPeriod(false); setNewPeriodName(''); }} className="text-gray-500 hover:text-gray-300">
+                                <X size={14} />
+                            </button>
+                        </div>
+                    )}
+                </div>
+                {selectedPeriodId && (
+                    <p className="text-[10px] text-gray-600 mt-2 uppercase tracking-wider">
+                        Ratings will be linked to: <span className="text-hawks-gold">{periods.find(p => p.id === selectedPeriodId)?.name}</span>
+                    </p>
+                )}
+            </div>
+
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Coach Development Ratings</h1>

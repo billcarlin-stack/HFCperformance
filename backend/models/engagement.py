@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class PlayerEngagement(Base):
     __tablename__ = 'player_engagement'
+    __table_args__ = {'schema': 'coaching'}
 
     jumper_no         = Column(Integer, primary_key=True)
     listing           = Column(String(50))     # e.g. List, Father-Son, Cat B
